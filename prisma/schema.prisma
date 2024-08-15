@@ -1,0 +1,155 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model Employee {
+  id String @id @default(uuid())
+  idNumber            String            @unique
+  firstName           String            @db.VarChar(100)
+  lastName            String            @db.VarChar(100)
+  gender              Sex
+  dateOfBirth         DateTime
+  mobile              String?
+  reportTracker       ReportTracker?
+  employeementHistory EmployeeHistory[]
+  reports             IncidentReports[]
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+}
+
+model Company {
+  id String @id @default(uuid())
+  name            String            @db.VarChar(100)
+  type            String
+  email           String            @unique @db.VarChar(100)
+  phone           String?
+  tinNumber       String            @unique @db.VarChar(100)
+  licenseNumber   String            @unique @db.VarChar(100)
+  status          CompanyStatus @default(Active)
+  employeeHistory EmployeeHistory[]
+  reports         IncidentReports[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model ReportTracker {
+  id String @id @default(uuid())
+  employee   Employee @relation(fields: [employeeId],references: [id])
+  employeeId String @unique
+  status     ReportTrackerStatus @default(Innocent)
+  guilty     Int
+  reports    Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model IncidentReports {
+  id String @id @default(uuid())
+  reportername      String           @db.VarChar(100)
+  reporterphone     String?
+  company           Company          @relation(fields: [companyId], references: [id])
+  companyId         String
+  employee          Employee         @relation(fields: [employeeId], references: [id])
+  employeeId        String 
+  employeeHistory   EmployeeHistory?
+  incidents         String
+  incidentDate      DateTime
+  incidentMagnitude IncidentMagnitude
+  note              String
+  Attachments       String
+  status            IncidentStatus @default(Pending)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@unique([incidents,employeeId,companyId])
+}
+
+model EmployeeHistory {
+  id String @id @default(uuid())
+  company    Company  @relation(fields: [companyId], references: [id])
+  companyId  String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId String
+
+  jobTitle  String
+  startDate DateTime
+  endDate   DateTime
+  status    EmployeeHistoryStatus @default(InActive)
+
+  incident   IncidentReports @relation(fields: [incidentId], references: [id])
+  incidentId String             @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id String @id @default(uuid())
+  IDNO      String   @unique @db.VarChar(100)
+  fullname  String   @db.VarChar(100)
+  gender    Sex
+  access    Access @default(FULL)
+  phone     String?
+  email     String   @unique @db.VarChar(100)
+  password  String   @db.VarChar(100)
+  token     String?
+  status    UserStatus @default(Active)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+enum Access{
+  FULL
+  RW
+  R
+}
+
+enum Sex{
+  Male
+  Female
+}
+
+enum CompanyStatus{
+  Active
+  InActive
+}
+
+enum EmployeeHistoryStatus{
+  Active
+  InActive
+}
+
+enum UserStatus{
+  Active
+  InActive
+  Deleted
+}
+
+enum IncidentStatus{
+  Approved
+  Rejected
+  Pending
+}
+
+enum ReportTrackerStatus{
+  Guilty
+  Innocent
+}
+
+enum IncidentMagnitude{
+  High
+  Medium
+}
