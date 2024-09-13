@@ -9,147 +9,205 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
+model Vacancy {
+  id              String        @id @default(uuid())
+  IDNO            String        @unique
+  title           String
+  position        String
+  vacancyType     String
+  employementType String
+  interview       String
+  gender          Sex
+  location        String
+  sector          String
+  experience      String
+  deadline        DateTime
+  vacancyNo       Int
+  salary          Int
+  description     String
+  status          VacancyStatus @default(Open)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([position, deadline, gender, vacancyType, employementType])
+}
+
+model Interview {
+  id        String          @id @default(uuid())
+  IDNO      String          @unique
+  title     String
+  questions Question[]
+  status    InterviewStatus @default(Active)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+// Question model
+model Question {
+  id          String    @id @default(uuid())
+  name        String
+  minValue    Int
+  maxValue    Int
+  interview   Interview @relation(fields: [interviewId], references: [id])
+  interviewId String
+}
+
+model Branch {
+  id         String       @id @default(uuid())
+  IDNO       String       @unique
+  name       String
+  city       String
+  subCity    String
+  wereda     String
+  Department Department[]
+  status     OrgStatus    @default(Active)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+}
+
+model Department {
+  id        String     @id @default(uuid())
+  IDNO      String     @unique
+  name      String
+  branch    Branch     @relation(fields: [branchId], references: [id])
+  branchId  String
+  positions Position[]
+  status    OrgStatus  @default(Active)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Position {
+  id                 String               @id @default(uuid())
+  IDNO               String               @unique
+  name               String
+  department         Department           @relation(fields: [departmentId], references: [id])
+  departmentId       String
+  status             OrgStatus            @default(Active)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  EmployeeWorkDetail EmployeeWorkDetail[]
+}
+
 model Employee {
-  id String @id @default(uuid())
-  idNumber            String            @unique
-  firstName           String            @db.VarChar(100)
-  lastName            String            @db.VarChar(100)
-  gender              Sex
-  dateOfBirth         DateTime
-  mobile              String?
-  reportTracker       ReportTracker?
-  employeementHistory EmployeeHistory[]
-  reports             IncidentReports[]
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
+  id          String               @id @default(uuid())
+  IDNO        String               @unique
+  fName       String
+  mName       String
+  lName       String
+  dateOfBirth DateTime
+  nationality String
+  sex         EmployeeSex
+  status      EmployeeStatus       @default(Active)
+  Profile     EmployeeProfile?
+  address     EmployeeAddress?
+  contact     EmployeeContact?
+  relatedInfo EmployeeRelatedInfo?
+  workDetail  EmployeeWorkDetail?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
 }
 
-model Company {
-  id String @id @default(uuid())
-  name            String            @db.VarChar(100)
-  type            String
-  email           String            @unique @db.VarChar(100)
-  phone           String?
-  tinNumber       String            @unique @db.VarChar(100)
-  licenseNumber   String            @unique @db.VarChar(100)
-  status          CompanyStatus @default(Active)
-  employeeHistory EmployeeHistory[]
-  reports         IncidentReports[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-}
-
-model ReportTracker {
-  id String @id @default(uuid())
-  employee   Employee @relation(fields: [employeeId],references: [id])
-  employeeId String @unique
-  status     ReportTrackerStatus @default(Innocent)
-  guilty     Int
-  reports    Int
+model EmployeeProfile {
+  id         String   @id @default(uuid())
+  profile    String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId String   @unique
+  IDFront    String
+  IDBack     String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
 
-model IncidentReports {
-  id String @id @default(uuid())
-  reportername      String           @db.VarChar(100)
-  reporterphone     String?
-  company           Company          @relation(fields: [companyId], references: [id])
-  companyId         String
-  employee          Employee         @relation(fields: [employeeId], references: [id])
-  employeeId        String 
-  employeeHistory   EmployeeHistory?
-  incidents         String
-  incidentDate      DateTime
-  incidentMagnitude IncidentMagnitude
-  note              String
-  Attachments       String
-  status            IncidentStatus @default(Pending)
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-
-  @@unique([incidents,employeeId,companyId])
-}
-
-model EmployeeHistory {
-  id String @id @default(uuid())
-  company    Company  @relation(fields: [companyId], references: [id])
-  companyId  String
+model EmployeeAddress {
+  id         String   @id @default(uuid())
+  city       String
+  subCity    String
+  wereda     String
+  houseNo    String
+  kebele     String
   employee   Employee @relation(fields: [employeeId], references: [id])
-  employeeId String
-
-  jobTitle  String
-  startDate DateTime
-  endDate   DateTime
-  status    EmployeeHistoryStatus @default(InActive)
-
-  incident   IncidentReports @relation(fields: [incidentId], references: [id])
-  incidentId String             @unique
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  employeeId String   @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
-model User {
-  id String @id @default(uuid())
-  IDNO      String   @unique @db.VarChar(100)
-  fullname  String   @db.VarChar(100)
-  gender    Sex
-  access    Access @default(FULL)
-  phone     String?
-  email     String   @unique @db.VarChar(100)
-  password  String   @db.VarChar(100)
-  token     String?
-  status    UserStatus @default(Active)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model EmployeeContact {
+  id         String   @id @default(uuid())
+  phone      String
+  email      String?
+  otherPhone String?
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId String   @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
-
-enum Access{
-  FULL
-  RW
-  R
+model EmployeeWorkDetail {
+  id              String   @id @default(uuid())
+  employementType String
+  shift           String
+  salary          String?
+  startDate       String
+  agreement       String
+  bankName        String?
+  bankAccount     String?
+  TIN             String?
+  position        Position @relation(fields: [positionId], references: [id])
+  positionId      String
+  employee        Employee @relation(fields: [employeeId], references: [id])
+  employeeId      String   @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
-enum Sex{
+model EmployeeRelatedInfo {
+  id                String   @id @default(uuid())
+  maritalStatus     String?
+  religion          String?
+  ethnicGroup       String?
+  bloodGroup        String?
+  medicalReport     String
+  fingerPrintReport String
+  employee          Employee @relation(fields: [employeeId], references: [id])
+  employeeId        String   @unique
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+enum Sex {
+  Male
+  Female
+  Both
+}
+
+enum EmployeeSex {
   Male
   Female
 }
 
-enum CompanyStatus{
+enum VacancyStatus {
+  Open
+  Closed
+}
+
+enum InterviewStatus {
   Active
   InActive
 }
 
-enum EmployeeHistoryStatus{
+enum OrgStatus {
   Active
   InActive
 }
 
-enum UserStatus{
+enum EmployeeStatus {
   Active
   InActive
-  Deleted
-}
-
-enum IncidentStatus{
-  Approved
-  Rejected
-  Pending
-}
-
-enum ReportTrackerStatus{
-  Guilty
-  Innocent
-}
-
-enum IncidentMagnitude{
-  High
-  Medium
+  Terminated
 }

@@ -1,4 +1,3 @@
-const db = require ('../config/db');
 // const sendMail = require('../helper/SendEmail');
 const {PrismaClient} = require ('@prisma/client');
 const bcrypt = require ('bcrypt');
