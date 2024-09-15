@@ -30,9 +30,23 @@ async function GenerateIdNo (prefixname) {
 
 exports.AllInterview = async (req, res) => {
   try {
-    const vacancys = await prisma.interview.findMany ();
-    return res.status (200).json ({vacancys});
+    const interviews = await prisma.interview.findMany ();
+    return res.status (200).json ({interviews});
   } catch (error) {
+    return res.status (500).json ({message: 'Something went wrong'});
+  }
+};
+
+exports.InterviewDetail = async (req, res) => {
+  const {id} = req.query;
+  console.log(id)
+  try {
+    const interview = await prisma.interview.findUnique ({where: {IDNO: id}});
+    const interviewQ = await prisma.question.findMany({where: {interviewId: interview.id}});
+
+    return res.status (200).json ({interview,interviewQ});
+  } catch (error) {
+    console.log(error)
     return res.status (500).json ({message: 'Something went wrong'});
   }
 };
@@ -40,7 +54,6 @@ exports.AllInterview = async (req, res) => {
 exports.NewInterview = async (req, res) => {
   const {title, questions} = req.body;
 
-  console.log (title, questions);
   try {
     const IDNO = await GenerateIdNo ('IVHR-00001');
       const interview=await prisma.interview.create ({
@@ -49,6 +62,39 @@ exports.NewInterview = async (req, res) => {
           title,
         },
       })
+
+      questions.forEach (async(question) => {
+        await prisma.question.create ({
+          data: {
+            name: question.name,
+            minValue:parseInt(question.min),
+            maxValue: parseInt(question.max),
+            interview: {
+              connect: {id: interview.id},
+            },
+          },
+        });
+      })
+
+    return res.status (200).json ({message: 'Interview Created'});
+  } catch (error) {
+    console.log (error);
+    return res.status (500).json ({message: 'Sth Went Wrong'});
+  }
+};
+
+exports.InterviewUpdate = async (req, res) => {
+  const {title, questions,IDNO} = req.body;
+
+  try {
+      const interview=await prisma.interview.update ({
+        where: {IDNO: IDNO},
+        data: {
+          title,
+        },
+      })
+
+      await prisma.question.deleteMany({where:{interviewId:interview.id}})
 
       questions.forEach (async(question) => {
         await prisma.question.create ({

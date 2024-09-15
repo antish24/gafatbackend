@@ -21,7 +21,8 @@ model Vacancy {
   position        String
   vacancyType     String
   employementType String
-  interview       String
+  interview       Interview     @relation(fields: [interviewId], references: [id])
+  interviewId     String
   gender          Sex
   location        String
   sector          String
@@ -30,6 +31,7 @@ model Vacancy {
   vacancyNo       Int
   salary          Int
   description     String
+  applicant       Applicant[]
   status          VacancyStatus @default(Open)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
@@ -37,11 +39,26 @@ model Vacancy {
   @@unique([position, deadline, gender, vacancyType, employementType])
 }
 
+model Applicant {
+  id         String          @id @default(uuid())
+  IDNO       String          @unique
+  employee   Employee        @relation(fields: [employeeId], references: [id])
+  employeeId String
+  vacancy    Vacancy         @relation(fields: [vacancyId], references: [id])
+  vacancyId  String
+  status     ApplicantStatus @default(Pending)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@unique([employeeId, vacancyId])
+}
+
 model Interview {
   id        String          @id @default(uuid())
   IDNO      String          @unique
   title     String
   questions Question[]
+  vacancy   Vacancy[]
   status    InterviewStatus @default(Active)
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
@@ -99,9 +116,10 @@ model Employee {
   IDNO        String               @unique
   fName       String
   mName       String
-  lName       String
+  lName       String?
   dateOfBirth DateTime
   nationality String
+  applicant   Applicant[]
   sex         EmployeeSex
   status      EmployeeStatus       @default(Active)
   Profile     EmployeeProfile?
@@ -111,6 +129,8 @@ model Employee {
   workDetail  EmployeeWorkDetail?
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
+
+  @@unique([fName, lName, mName, dateOfBirth])
 }
 
 model EmployeeProfile {
@@ -210,4 +230,11 @@ enum EmployeeStatus {
   Active
   InActive
   Terminated
+  Pending
+}
+
+enum ApplicantStatus {
+  Pending
+  Hired
+  Fail
 }

@@ -6,5 +6,7 @@ const auth=require('../../middleware/auth')
 
 router.post('/new',InterviewController.NewInterview)
 router.get('/all',InterviewController.AllInterview)
+router.get('/detail',InterviewController.InterviewDetail)
+router.post('/update',InterviewController.InterviewUpdate)
 
 module.exports=router
