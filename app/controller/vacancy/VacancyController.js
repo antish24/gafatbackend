@@ -29,28 +29,28 @@ async function GenerateIdNo (prefixname) {
 }
 
 async function GenerateIdNoEmployee (prefixname) {
-  // Get last id doc
-  const lastDoc = await prisma.employee.findFirst ({where:{status:"Pending"},
-    orderBy: {
-      createdAt: 'desc',
-    },
-    take: 1,
-  });
-
-  if (!lastDoc) return prefixname;
-  // Extract code and number
-  const code = lastDoc.IDNO.split ('-')[0];
-  let number = lastDoc.IDNO.split ('-')[1];
-
-  // Increment number
-  number = parseInt (number) + 1;
-
-  // Pad with zeros
-  number = number.toString ().padStart (5, '0');
-
-  // Return new id
-  return code + '-' + number;
-}
+    // Get last id doc
+    const lastDoc = await prisma.employee.findFirst ({
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 1,
+    });
+  
+    if (!lastDoc) return prefixname;
+    // Extract code and number
+    const code = lastDoc.IDNO.split ('-')[0];
+    let number = lastDoc.IDNO.split ('-')[1];
+  
+    // Increment number
+    number = parseInt (number) + 1;
+  
+    // Pad with zeros
+    number = number.toString ().padStart (5, '0');
+  
+    // Return new id
+    return code + '-' + number;
+  }
 
 exports.AllVacancy = async (req, res) => {
   try {
@@ -64,7 +64,9 @@ exports.AllVacancy = async (req, res) => {
 exports.VacancyApplicants = async (req, res) => {
   const {id} = req.query;
   try {
-    const RawApplicants = await prisma.applicant.findMany ({
+    const RawApplicants = await prisma.applicant.findMany ({orderBy: {
+      createdAt: 'desc',
+    },
       where: {vacancyId: id},
       include: {employee: true},
     });
@@ -80,12 +82,51 @@ exports.VacancyApplicants = async (req, res) => {
         dateOfBirth: emp.employee.dateOfBirth,
         nationality: emp.employee.nationality,
         status: emp.status,
+        score:emp.totalScore,
+        maxScore:emp.maxScore,
         createdAt: emp.createdAt,
       };
     });
 
     return res.status (200).json ({applicants});
   } catch (error) {
+    return res.status (500).json ({message: 'Something went wrong'});
+  }
+};
+
+exports.ApplicantDetail = async (req, res) => {
+  const {id} = req.query;
+  try {
+    const RawApplicant = await prisma.applicant.findUnique ({
+      where: {id: id},
+      include: {employee: true,vacancy:{include:{interview:true}}},
+    });
+
+    const RawApplicantContact = await prisma.employeeContact.findMany({
+      where: {employeeId: RawApplicant.employeeId},
+    });
+
+    const applicant ={
+        score:RawApplicant.totalScore,
+        maxScore:RawApplicant.maxScore,
+        position: RawApplicant.vacancy.position,
+        interview: RawApplicant.vacancy.interview.IDNO,
+        IDNO: RawApplicant.employee.IDNO,
+        applicantId: RawApplicant.id,
+        id: RawApplicant.employee.id,
+        name: RawApplicant.employee.fName + " "+ RawApplicant.employee.mName + " "+ (RawApplicant.employee.lName?RawApplicant.employee.lName:''),
+        sex: RawApplicant.employee.sex,
+        dateOfBirth: RawApplicant.employee.dateOfBirth,
+        nationality: RawApplicant.employee.nationality,
+        phone:RawApplicantContact[0].phone,
+        email:RawApplicantContact[0].email,
+        status: RawApplicant.status,
+        createdAt: RawApplicant.createdAt,
+      };
+
+    return res.status (200).json ({applicant});
+  } catch (error) {
+    console.log(error)
     return res.status (500).json ({message: 'Something went wrong'});
   }
 };
@@ -109,7 +150,7 @@ exports.AddApplicant = async (req, res) => {
     vacancy,
   } = req.body;
   try {
-    const IDNO = await GenerateIdNoEmployee ('EMVAC-00001');
+    const IDNO = await GenerateIdNoEmployee ('EMPHR-00001');
     
     const employeeID = await prisma.employee.create ({
       data: {

@@ -40,15 +40,18 @@ model Vacancy {
 }
 
 model Applicant {
-  id         String          @id @default(uuid())
-  IDNO       String          @unique
-  employee   Employee        @relation(fields: [employeeId], references: [id])
+  id         String               @id @default(uuid())
+  IDNO       String               @unique
+  employee   Employee             @relation(fields: [employeeId], references: [id])
   employeeId String
-  vacancy    Vacancy         @relation(fields: [vacancyId], references: [id])
+  vacancy    Vacancy              @relation(fields: [vacancyId], references: [id])
   vacancyId  String
-  status     ApplicantStatus @default(Pending)
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
+  questions  ApplicantInterview[]
+  totalScore Int                  @default(0)
+  maxScore   Int                  @default(0)
+  status     ApplicantStatus      @default(Pending)
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
 
   @@unique([employeeId, vacancyId])
 }
@@ -62,6 +65,18 @@ model Interview {
   status    InterviewStatus @default(Active)
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
+}
+
+model ApplicantInterview {
+  id          String    @id @default(uuid())
+  questions   String
+  score       Int
+  min         Int
+  max         Int
+  applicant   Applicant @relation(fields: [applicantId], references: [id])
+  applicantId String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 // Question model
@@ -112,23 +127,27 @@ model Position {
 }
 
 model Employee {
-  id          String               @id @default(uuid())
-  IDNO        String               @unique
-  fName       String
-  mName       String
-  lName       String?
-  dateOfBirth DateTime
-  nationality String
-  applicant   Applicant[]
-  sex         EmployeeSex
-  status      EmployeeStatus       @default(Active)
-  Profile     EmployeeProfile?
-  address     EmployeeAddress?
-  contact     EmployeeContact?
-  relatedInfo EmployeeRelatedInfo?
-  workDetail  EmployeeWorkDetail?
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
+  id                    String                         @id @default(uuid())
+  IDNO                  String                         @unique
+  fName                 String
+  mName                 String
+  lName                 String?
+  dateOfBirth           DateTime
+  nationality           String
+  applicant             Applicant[]
+  sex                   EmployeeSex
+  status                EmployeeStatus                 @default(Active)
+  Profile               EmployeeProfile?
+  address               EmployeeAddress?
+  contact               EmployeeContact?
+  relatedInfo           EmployeeRelatedInfo?
+  educationalBackground EmployeeEducationalBackground?
+  workDetail            EmployeeWorkDetail?
+  leaveBalance          LeaveBalance?
+  leaveApplication      LeaveApplication[]
+  workHistory           EmployeeWorkHistory?
+  createdAt             DateTime                       @default(now())
+  updatedAt             DateTime                       @updatedAt
 
   @@unique([fName, lName, mName, dateOfBirth])
 }
@@ -172,7 +191,7 @@ model EmployeeWorkDetail {
   id              String   @id @default(uuid())
   employementType String
   shift           String
-  salary          String?
+  salary          String
   startDate       String
   agreement       String
   bankName        String?
@@ -187,17 +206,94 @@ model EmployeeWorkDetail {
 }
 
 model EmployeeRelatedInfo {
-  id                String   @id @default(uuid())
-  maritalStatus     String?
-  religion          String?
-  ethnicGroup       String?
-  bloodGroup        String?
-  medicalReport     String
-  fingerPrintReport String
-  employee          Employee @relation(fields: [employeeId], references: [id])
-  employeeId        String   @unique
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                       String   @id @default(uuid())
+  maritalStatus            String?
+  religion                 String?
+  ethnicGroup              String?
+  bloodGroup               String?
+  familyBg                 String?
+  medicalReport            String
+  fingerPrintReport        String
+  emergencyContactName     String?
+  emergencyContactPhone    String?
+  emergencyContactRelation String?
+  employee                 Employee @relation(fields: [employeeId], references: [id])
+  employeeId               String   @unique
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+}
+
+model EmployeeEducationalBackground {
+  id            String   @id @default(uuid())
+  institution   String
+  qualification String
+  attachment    String
+  startDate     DateTime
+  endDate       DateTime
+  employee      Employee @relation(fields: [employeeId], references: [id])
+  employeeId    String   @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model EmployeeWorkHistory {
+  id         String   @id @default(uuid())
+  position   String
+  branch     String
+  department String
+  startDate  DateTime
+  endDate    DateTime
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId String   @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model LeaveType {
+  id               String             @id @default(uuid())
+  name             String
+  maxLeaveDate     Int
+  applicableAfter  Int
+  repeat           Int
+  withPay          LeaveTypeStatus
+  leaveApplication LeaveApplication[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model LeaveApplication {
+  id          String                 @id @default(uuid())
+  employee    Employee               @relation(fields: [employeeId], references: [id])
+  employeeId  String
+  leaveType   LeaveType              @relation(fields: [leaveTypeId], references: [id])
+  leaveTypeId String
+  startDate   DateTime
+  endDate     DateTime
+  totalDay    Int
+  reason      String
+  status      LeaveApplicationStatus @default(Pending)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+}
+
+model Holiday {
+  id        String   @id @default(uuid())
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  totalDay  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LeaveBalance {
+  id         String   @id @default(uuid())
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId String   @unique
+  used       Int      @default(0)
+  balance    Int      
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 enum Sex {
@@ -226,6 +322,18 @@ enum OrgStatus {
   InActive
 }
 
+enum LeaveTypeStatus {
+  Yes
+  No
+  Other
+}
+
+enum LeaveApplicationStatus {
+  Approved
+  Failed
+  Pending
+}
+
 enum EmployeeStatus {
   Active
   InActive
@@ -237,4 +345,5 @@ enum ApplicantStatus {
   Pending
   Hired
   Fail
+  Waiting
 }

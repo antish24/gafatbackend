@@ -8,5 +8,6 @@ router.post('/new',InterviewController.NewInterview)
 router.get('/all',InterviewController.AllInterview)
 router.get('/detail',InterviewController.InterviewDetail)
 router.post('/update',InterviewController.InterviewUpdate)
+router.post('/applicant',InterviewController.InterviewApplicant)
 
 module.exports=router

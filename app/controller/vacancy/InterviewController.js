@@ -39,7 +39,6 @@ exports.AllInterview = async (req, res) => {
 
 exports.InterviewDetail = async (req, res) => {
   const {id} = req.query;
-  console.log(id)
   try {
     const interview = await prisma.interview.findUnique ({where: {IDNO: id}});
     const interviewQ = await prisma.question.findMany({where: {interviewId: interview.id}});
@@ -77,6 +76,45 @@ exports.NewInterview = async (req, res) => {
       })
 
     return res.status (200).json ({message: 'Interview Created'});
+  } catch (error) {
+    console.log (error);
+    return res.status (500).json ({message: 'Sth Went Wrong'});
+  }
+};
+
+exports.InterviewApplicant = async (req, res) => {
+  const {questions,applicant} = req.body;
+
+  try {
+      const interviewScore=await prisma.applicant.update({where:{id:applicant},
+        data: {
+          status:'Waiting',
+          totalScore:parseInt(questions.reduce((acc, q) => {
+            return acc + +q.score;
+          }, 0)),
+          maxScore:parseInt(questions.reduce((acc, q) => {
+            return acc + +q.max;
+          }, 0)),
+        },
+      })
+
+      await prisma.applicantInterview.deleteMany({where:{applicantId:interviewScore.id}})
+      
+      questions.forEach (async(question) => {
+        await prisma.applicantInterview.create ({
+          data: {
+            questions: question.name,
+            score:parseInt(question.score),
+            max:parseInt(question.min),
+            min: parseInt(question.max),
+            applicant: {
+              connect: {id: interviewScore.id},
+            },
+          },
+        });
+      })
+
+    return res.status (200).json ({message: 'Applicant Interview Saved'});
   } catch (error) {
     console.log (error);
     return res.status (500).json ({message: 'Sth Went Wrong'});

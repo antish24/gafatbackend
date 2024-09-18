@@ -63,6 +63,32 @@ exports.AllEmployee = async (req, res) => {
   }
 };
 
+exports.AllEmployeeNames = async (req, res) => {
+  try {
+    const rawEmployees = await prisma.employeeWorkDetail.findMany ({
+      include: {
+        employee: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const employees = rawEmployees.map (emp => {
+      return {
+        id: emp.employee.id,
+        IDNO: emp.employee.IDNO,
+        fName: emp.employee.fName,
+        mName: emp.employee.mName,
+        lName: emp.employee.lName,
+      };
+    });
+    return res.status (200).json ({employees});
+  } catch (error) {
+    return res.status (500).json ({message: 'Something went wrong'});
+  }
+};
+
 exports.NewEmployee = async (req, res) => {
   const {
     fName,
@@ -142,6 +168,13 @@ exports.NewEmployee = async (req, res) => {
       },
     });
 
+    await prisma.leaveBalance.create ({
+      data: {
+        employee: {connect: {id: employeeID.id}},
+        balance:16,
+      },
+    });
+
     await prisma.employeeWorkDetail.create ({
       data: {
         employee: {connect: {id: employeeID.id}},
@@ -170,6 +203,93 @@ exports.NewEmployee = async (req, res) => {
     });
     return res.status (200).json ({message: 'Employee Created'});
   } catch (error) {
+    return res.status (500).json ({message: 'Sth Went Wrong'});
+  }
+};
+
+
+exports.HireEmployee = async (req, res) => {
+  const {
+    position,
+    employementType,
+    shift,
+    salary,
+    startDate,
+    agreement,
+    bankName,
+    bankAccount,
+    TIN,
+    religion,
+    maritalStatus,
+    ethnicGroup,
+    bloodGroup,
+    medicalReport,
+    fingerPrintReport,
+    profilePhoto,
+    IDF,
+    IDB,
+    empId
+  } = req.body;
+  try {
+
+    await prisma.applicant.updateMany ({
+      where:{employeeId:empId},
+      data: {
+        status:'Hired'
+      },
+    });
+
+    const employeeID = await prisma.employee.update ({
+      where:{id:empId},
+      data:{status:'Active'}
+    });
+
+    await prisma.employeeProfile.create ({
+      data: {
+        employee: {connect: {id: employeeID.id}},
+        profile: profilePhoto.name,
+        IDFront: IDF.name,
+        IDBack: IDB.name,
+      },
+    });
+
+    await prisma.leaveBalance.create ({
+      data: {
+        employee: {connect: {id: employeeID.id}},
+        balance:16,
+      },
+    });
+
+    await prisma.employeeWorkDetail.create ({
+      data: {
+        employee: {connect: {id: employeeID.id}},
+        position: {connect: {id: position}},
+        employementType,
+        shift,
+        salary,
+        startDate,
+        agreement: agreement.name,
+        bankName,
+        bankAccount,
+        TIN,
+      },
+    });
+
+    await prisma.employeeRelatedInfo.create ({
+      data: {
+        employee: {connect: {id: employeeID.id}},
+        religion,
+        maritalStatus,
+        ethnicGroup,
+        bloodGroup,
+        medicalReport: medicalReport.name,
+        fingerPrintReport: fingerPrintReport.name,
+      },
+    });
+    console.log('ggod')
+    return res.status (200).json ({message: 'Employee Hired'});
+  } catch (error) {
+    console.log(error)
     return res.status (500).json ({message: 'Sth Went Wrong'});
   }
 };
