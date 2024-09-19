@@ -188,22 +188,23 @@ model EmployeeContact {
 }
 
 model EmployeeWorkDetail {
-  id              String            @id @default(uuid())
-  employementType String
-  shift           String
-  salary          String
-  startDate       String
-  agreement       String
-  bankName        String?
-  bankAccount     String?
-  TIN             String?
-  position        Position          @relation(fields: [positionId], references: [id])
-  positionId      String
-  employee        Employee          @relation(fields: [employeeId], references: [id])
-  employeeId      String            @unique
-  Project         EmployeeProject[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  id                      String                   @id @default(uuid())
+  employementType         String
+  shift                   String
+  salary                  String
+  startDate               String
+  agreement               String
+  bankName                String?
+  bankAccount             String?
+  TIN                     String?
+  position                Position                 @relation(fields: [positionId], references: [id])
+  positionId              String
+  employee                Employee                 @relation(fields: [employeeId], references: [id])
+  employeeId              String                   @unique
+  Project                 EmployeeProject[]
+  employeeSalaryStructure EmployeeSalaryStructure?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
 }
 
 model EmployeeRelatedInfo {
@@ -298,22 +299,22 @@ model LeaveBalance {
 }
 
 model TimeSheet {
-  id          String          @id @default(uuid())
-  employeeProject     EmployeeProject @relation(fields: [employeeProjectId], references: [id])
-  employeeProjectId   String
-  regularPH   Int
-  regularPOTH Int
-  specialPH   Int
-  OT32        Int
-  totalHours  Int
-  day         Int
-  month       Int
-  year        Int
-  status      TimeSheetStatus @default(Pending)
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  id                String          @id @default(uuid())
+  employeeProject   EmployeeProject @relation(fields: [employeeProjectId], references: [id])
+  employeeProjectId String
+  regularPH         Int
+  regularPOTH       Int
+  specialPH         Int
+  OT32              Int
+  totalHours        Int
+  day               Int
+  month             Int
+  year              Int
+  status            TimeSheetStatus @default(Pending)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
-  @@unique([employeeProjectId,day,year,month])
+  @@unique([employeeProjectId, day, year, month])
 }
 
 model Company {
@@ -385,7 +386,55 @@ model EmployeeProject {
   createdAt    DateTime              @default(now())
   updatedAt    DateTime              @updatedAt
 
-  @@unique([workDetailId,projectId])
+  @@unique([workDetailId, projectId])
+}
+
+model SalaryComponent {
+  id              String                       @id @default(uuid())
+  name            String                       @unique
+  type            SalaryComponentType
+  pension         PensionType                  @default(No)
+  tax             TaxType                      @default(No)
+  semiTaxType     SemiTaxType                  @default(None)
+  minNonTaxable   Int                          @default(0)
+  applicableAfter Int                          @default(1)
+  conditionType   SalaryComponentConditionType
+  salaryStructure SalaryStructure[]
+  status          SalaryComponentStatus        @default(Active)
+  createdAt       DateTime                     @default(now())
+  updatedAt       DateTime                     @updatedAt
+}
+
+model SalaryStructure {
+  id                    String              @id @default(uuid())
+  salaryStructureForm   SalaryStructureForm @relation(fields: [salaryStructureFormId], references: [id])
+  salaryStructureFormId String
+  salaryComponent       SalaryComponent     @relation(fields: [salaryComponentId], references: [id])
+  salaryComponentId     String
+  amount                Int
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+}
+
+model SalaryStructureForm {
+  id              String                    @id @default(uuid())
+  name            String                    @unique
+  salaryStructure SalaryStructure[]
+  employee        EmployeeSalaryStructure[]
+  status          SalaryComponentStatus     @default(Active)
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+}
+
+model EmployeeSalaryStructure {
+  id                    String                @id @default(uuid())
+  salaryStructureForm   SalaryStructureForm   @relation(fields: [salaryStructureFormId], references: [id])
+  salaryStructureFormId String
+  employeeWorkDetail    EmployeeWorkDetail    @relation(fields: [employeeWorkDetailId], references: [id])
+  employeeWorkDetailId  String                @unique
+  status                SalaryComponentStatus @default(Active)
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
 }
 
 //hiiiiiiiiiiiii
@@ -432,6 +481,30 @@ enum TimeSheetStatus {
   Failed
 }
 
+enum PensionType {
+  Yes
+  No
+}
+
+enum TaxType {
+  Yes
+  Semi
+  No
+}
+
+enum SalaryComponentConditionType {
+  Add
+  Deduct
+  Pension
+  IncomeTax
+}
+
+enum SemiTaxType {
+  Fixed
+  Percent
+  None
+}
+
 enum ProjectStatus {
   Pending
   Active
@@ -448,6 +521,16 @@ enum EmployeeProjectStatus {
   InActive
   Active
   Terminated
+}
+
+enum SalaryComponentStatus {
+  InActive
+  Active
+}
+
+enum SalaryComponentType {
+  Earning
+  Deduction
 }
 
 enum Sex {

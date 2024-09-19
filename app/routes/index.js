@@ -26,6 +26,10 @@ const LeaveApplicationRoute=require('./leave/LeaveApplicationRoute')
 const LeaveRoute=require('./leave/LeaveTypeAndHolidayRoute')
 const LeaveBalanceRoute=require('./leave/LeaveBalanceRoute')
 
+//salary route
+const SalaryRoute=require('./salary/SalaryRoute')
+
+
 router.use('/users',userRoute)
 router.use('/interview',InterviewRoute)
 router.use('/vacancy',VacancyRoute)
@@ -43,6 +47,8 @@ router.use('/employee',EmployeeRoute)
 router.use('/timesheet',TimeSheetRoute)
 
 router.use('/project',ProjectRoute)
+
+router.use('/salary',SalaryRoute)
 
 
 module.exports=router
