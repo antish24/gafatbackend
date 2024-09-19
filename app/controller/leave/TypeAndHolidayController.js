@@ -6,7 +6,6 @@ const prisma = new PrismaClient ();
 exports.AllTypes = async (req, res) => {
   try {
     const leaveTypes = await prisma.leaveType.findMany ();
-    console.log('leaves'+leaveTypes)
     return res.status (200).json ({leaveTypes});
   } catch (error) {
     return res.status (500).json ({message: 'Something went wrong'});
@@ -59,7 +58,6 @@ exports.NewType = async (req, res) => {
 exports.AllHoliday = async (req, res) => {
   try {
     const holidays = await prisma.holiday.findMany ();
-    console.log(holidays)
     return res.status (200).json ({holidays});
   } catch (error) {
     return res.status (500).json ({message: 'Something went wrong'});

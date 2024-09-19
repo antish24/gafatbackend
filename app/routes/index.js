@@ -3,6 +3,12 @@ const router=express.Router()
 
 const userRoute=require('./UsersRoute')
 
+//Timesheet routes
+const TimeSheetRoute=require('./timesheet/TimeSheetRoute')
+
+//Timesheet routes
+const ProjectRoute=require('./project/ProjectRoute')
+
 //vacancy routes
 const VacancyRoute=require('./vacancy/VacancyRoute')
 const InterviewRoute=require('./vacancy/InterviewRoute')
@@ -33,6 +39,10 @@ router.use('/leave/application',LeaveApplicationRoute)
 router.use('/leave/balance',LeaveBalanceRoute)
 
 router.use('/employee',EmployeeRoute)
+
+router.use('/timesheet',TimeSheetRoute)
+
+router.use('/project',ProjectRoute)
 
 
 module.exports=router

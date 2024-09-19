@@ -6,7 +6,7 @@ exports.ApplicationApprove = async (req, res) => {
   const {id}=req.query
   try {
     const leaveApplication = await prisma.leaveApplication.update({where:{id:id},data:{status:'Approved'}});
-    await prisma.leaveBalance.update({where:{employeeId:leaveApplication.employeeId},data:{used:leaveApplication.totalDay,balance:{decrement:leaveApplication.totalDay}}});
+    await prisma.leaveBalance.update({where:{employeeId:leaveApplication.employeeId},data:{used:{increment:leaveApplication.totalDay},balance:{decrement:leaveApplication.totalDay}}});
 
     return res.status (200).json ({message:"Leave Approved"});
   } catch (error) {
@@ -19,7 +19,7 @@ exports.ApplicationRestore = async (req, res) => {
   const {id}=req.query
   try {
     const leaveApplication = await prisma.leaveApplication.update({where:{id:id},data:{status:'Pending'}});
-    await prisma.leaveBalance.update({where:{employeeId:leaveApplication.employeeId},data:{used:leaveApplication.totalDay,balance:{increment:leaveApplication.totalDay}}});
+    await prisma.leaveBalance.update({where:{employeeId:leaveApplication.employeeId},data:{used:{decrement:leaveApplication.totalDay},balance:{increment:leaveApplication.totalDay}}});
 
     return res.status (200).json ({message:"Leave Restored"});
   } catch (error) {
