@@ -140,16 +140,20 @@ exports.StructureDetail = async (req, res) => {
 
 
 exports.AssignStructure = async (req, res) => {
-  const {employee,structure} = req.query;
+  const {employee,structure} = req.body;
   try {
-    await prisma.employeeSalaryStructure.create({data: {
-      employeeWorkDetail: {
-        connect: {id: employee},
-      },
-      salaryStructureForm: {
-        connect: {id: structure},
-      },
-    }});
+    console.log(employee,structure)
+    employee.forEach (async emp => {
+      await prisma.employeeSalaryStructure.create({data: {
+        employeeWorkDetail: {
+          connect: {id: emp},
+        },
+        salaryStructureForm: {
+          connect: {id: structure},
+        },
+      }});
+    })
+    
     return res.status (200).json ({message:"Salary Structure Assigned"});
   } catch (error) {
     console.log(error)
@@ -159,9 +163,24 @@ exports.AssignStructure = async (req, res) => {
 
 exports.AllAssignStructure = async (req, res) => {
   try {
-    const all=await prisma.employeeSalaryStructure.findMany({
-      // include:{employeeWorkDetail:{employee:true},salaryStructureForm:true}
+    const list=await prisma.employeeSalaryStructure.findMany({
+      include:{employeeWorkDetail:{include:{employee:true}},salaryStructureForm:true}
     });
+
+    const all = list.map (emp => {
+      return {
+        IDNO: emp.employeeWorkDetail.employee.IDNO,
+        fName: emp.employeeWorkDetail.employee.fName,
+        mName: emp.employeeWorkDetail.employee.mName,
+        lName: emp.employeeWorkDetail.employee.lName,
+        sex: emp.employeeWorkDetail.employee.sex,
+        structure: emp.salaryStructureForm.name,
+        createdAt: emp.createdAt,
+        status: emp.status,
+        id: emp.id,
+      };
+    });
+
     return res.status (200).json ({all});
   } catch (error) {
     console.log(error)

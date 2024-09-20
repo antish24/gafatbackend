@@ -202,6 +202,7 @@ model EmployeeWorkDetail {
   employee                Employee                 @relation(fields: [employeeId], references: [id])
   employeeId              String                   @unique
   Project                 EmployeeProject[]
+  employeePayroll         EmployeePayroll[]
   employeeSalaryStructure EmployeeSalaryStructure?
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
@@ -369,6 +370,7 @@ model Project {
   price       Int
   attachments String
   employees   EmployeeProject[]
+  payroll     Payroll[]
   status      ProjectStatus     @default(Pending)
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
@@ -437,6 +439,40 @@ model EmployeeSalaryStructure {
   updatedAt             DateTime              @updatedAt
 }
 
+model Payroll {
+  id              String            @id @default(uuid())
+  generatedBy     String
+  basedOn         String
+  positionId      String?
+  project         Project           @relation(fields: [projectId], references: [id])
+  projectId       String
+  from            DateTime
+  to              DateTime
+  ApprovedBy      String
+  employeePayroll EmployeePayroll[]
+  status          PayrollStatus     @default(Pending)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([from, to, projectId])
+}
+
+model EmployeePayroll {
+  id                   String             @id @default(uuid())
+  payroll              Payroll            @relation(fields: [payrollId], references: [id])
+  payrollId            String
+  employeeWorkDetail   EmployeeWorkDetail @relation(fields: [employeeWorkDetailId], references: [id])
+  employeeWorkDetailId String
+  salary               String
+  totalEarning         String
+  grossSalary          String
+  totalDeduction       String
+  netSalary            String
+  status               PayrollStatus      @default(Pending)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+}
+
 //hiiiiiiiiiiiii
 
 // model Company {
@@ -476,6 +512,12 @@ model EmployeeSalaryStructure {
 //end
 
 enum TimeSheetStatus {
+  Pending
+  Approved
+  Failed
+}
+
+enum PayrollStatus {
   Pending
   Approved
   Failed

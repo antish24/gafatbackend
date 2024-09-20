@@ -29,6 +29,9 @@ const LeaveBalanceRoute=require('./leave/LeaveBalanceRoute')
 //salary route
 const SalaryRoute=require('./salary/SalaryRoute')
 
+//payroll route
+const PayrollRoute=require('./payroll/PayrollRoute')
+
 
 router.use('/users',userRoute)
 router.use('/interview',InterviewRoute)
@@ -49,6 +52,7 @@ router.use('/timesheet',TimeSheetRoute)
 router.use('/project',ProjectRoute)
 
 router.use('/salary',SalaryRoute)
+router.use('/payroll',PayrollRoute)
 
 
 module.exports=router
