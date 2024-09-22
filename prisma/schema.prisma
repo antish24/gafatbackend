@@ -146,6 +146,8 @@ model Employee {
   leaveBalance          LeaveBalance?
   leaveApplication      LeaveApplication[]
   workHistory           EmployeeWorkHistory?
+  requests    Request[] // One employee can have many requests
+  returns     Return[]
   createdAt             DateTime                       @default(now())
   updatedAt             DateTime                       @updatedAt
 
@@ -192,7 +194,7 @@ model EmployeeWorkDetail {
   employementType         String
   shift                   String
   salary                  String
-  startDate               String
+  startDate               DateTime
   agreement               String
   bankName                String?
   bankAccount             String?
@@ -467,6 +469,9 @@ model EmployeePayroll {
   totalEarning         String
   grossSalary          String
   totalDeduction       String
+  incomeTax            String
+  employeePension      String
+  employerPension      String
   netSalary            String
   status               PayrollStatus      @default(Pending)
   createdAt            DateTime           @default(now())
@@ -510,6 +515,77 @@ model EmployeePayroll {
 // }
 
 //end
+
+
+
+model Inventory {
+  id          Int       @id @default(autoincrement())
+  name        String
+  quantity    Int
+  price       Float
+  description String?
+  requests    Request[] // One inventory item can have many requests
+  returns     Return[] // One inventory item can have many returns
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+
+model Tender {
+  id            Int      @id @default(autoincrement())
+  title         String
+  description   String
+  deadline      DateTime
+  budget        Float
+  status        String
+  attachments    String
+  companyName   String
+  startingDate  DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+
+model DailyReport {
+  id              Int      @id @default(autoincrement())
+  userId          String
+  date            DateTime
+  shiftTime       String
+  location        String
+  report          String
+  description     String   // New field for description
+  reportMeasurement String  // New field for report measurement
+  status          String   @default("Pending")
+  attachments     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+
+model Return {
+  id          Int       @id @default(autoincrement())
+  inventoryId Int
+  requestId   Int
+  employeeId  String // Add this line
+  quantity    Int
+  createdAt   DateTime  @default(now())
+  inventory   Inventory @relation(fields: [inventoryId], references: [id])
+  request     Request   @relation(fields: [requestId], references: [id])
+  employee    Employee  @relation(fields: [employeeId], references: [id]) // Add this line
+}
+
+
+model Request {
+  id          Int       @id @default(autoincrement())
+  inventoryId Int
+  employeeId  String
+  quantity    Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  inventory   Inventory @relation(fields: [inventoryId], references: [id])
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  returns     Return[] // One request can have many returns
+}
 
 enum TimeSheetStatus {
   Pending

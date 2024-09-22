@@ -26,7 +26,7 @@ exports.TimeSheetForm = async (req, res) => {
     
     const findTimeSheet = await prisma.timeSheet.findMany ({
       where: {
-        day: parseInt (currentDay),
+        day: parseInt (day),
         month: parseInt (currentMonth),
         year: parseInt (currentYear),
         employeeProject:{project:{site:site}}
@@ -43,7 +43,7 @@ exports.TimeSheetForm = async (req, res) => {
           specialPH: 0,
           OT32: 0,
           totalHours: 0,
-          day: currentDay,
+          day: parseInt(day),
           month: currentMonth,
           year: currentYear,
         },
@@ -145,78 +145,95 @@ exports.TimeSheetData = async (req, res) => {
       },
     });
 
-    const regularPH = list.reduce((total, item) => {
-      if(item.regularPH !== 0) {
-        return total + item.regularPH;
-      }
-      return total;
-    }, 0);
+    const groupedList = list.reduce((groups, item) => {
+      const id = item.employeeProject.workDetail.employee.id;  
+      groups[id] = groups[id] || [];
+      groups[id].push(item);
+      return groups;
+    }, {});
     
-    // Count days where regularPH is not 0  
-    const regularPD = list.reduce((count, item) => {
-      if(item.regularPH !== 0) {
-        return count + 1;
-      }
-      return count;
-    }, 0);
+    const all = Object.values(groupedList).map (emp => {
+      const regularPH = emp.reduce((total, item) => {
+        if(item.regularPH !== 0) {
+          return total + item.regularPH;
+        }
+        return total;
+      }, 0);
+      
+      // Count days where regularPH is not 0  
+      const regularPD = emp.reduce((count, item) => {
+        if(item.regularPH !== 0) {
+          return count + 1;
+        }
+        return count;
+      }, 0);
+  
+  
+      const regularPOTH = emp.reduce((total, item) => {
+        if(item.regularPOTH !== 0) {
+          return total + item.regularPOTH;
+        }
+        return total;
+      }, 0);
+      
+      // Count days where regularPH is not 0  
+      const regularPOTD = emp.reduce((count, item) => {
+        if(item.regularPOTH !== 0) {
+          return count + 1;
+        }
+        return count;
+      }, 0);
+  
+      const specialPH = emp.reduce((total, item) => {
+        if(item.specialPH !== 0) {
+          return total + item.specialPH;
+        }
+        return total;
+      }, 0);
+
+      const OT32H = emp.reduce((total, item) => {
+        if(item.OT32 !== 0) {
+          return total + item.OT32;
+        }
+        return total;
+      }, 0);
+      
+      // Count days where regularPH is not 0  
+      const specialPD = emp.reduce((count, item) => {
+        if(item.specialPH !== 0) {
+          return count + 1;
+        }
+        return count;
+      }, 0);
+  
+      const totalDays = emp.reduce((count, item) => {
+          return count + 1;
+      }, 0);
+  
+      const totalHours = emp.reduce((total, item) => {
+          return total + item.totalHours ;
+      }, 0);
 
 
-    const regularPOTH = list.reduce((total, item) => {
-      if(item.regularPOTH !== 0) {
-        return total + item.regularPOTH;
-      }
-      return total;
-    }, 0);
-    
-    // Count days where regularPH is not 0  
-    const regularPOTD = list.reduce((count, item) => {
-      if(item.regularPOTH !== 0) {
-        return count + 1;
-      }
-      return count;
-    }, 0);
-
-    const specialPH = list.reduce((total, item) => {
-      if(item.specialPH !== 0) {
-        return total + item.specialPH;
-      }
-      return total;
-    }, 0);
-    
-    // Count days where regularPH is not 0  
-    const specialPD = list.reduce((count, item) => {
-      if(item.specialPH !== 0) {
-        return count + 1;
-      }
-      return count;
-    }, 0);
-
-    const totalDays = list.reduce((count, item) => {
-        return count + 1;
-    }, 0);
-
-    const totalHours=specialPD+regularPD+regularPOTD
-
-    
-    const all = list.map (emp => {
+      console.log(totalHours,regularPH)
       return {
-        id: emp.id,
-        IDNO: emp.employeeProject.workDetail.employee.IDNO,
-        fName: emp.employeeProject.workDetail.employee.fName,
-        mName: emp.employeeProject.workDetail.employee.mName,
-        lName: emp.employeeProject.workDetail.employee.lName,
+        id: emp[0].id,
+        IDNO: emp[0].employeeProject.workDetail.employee.IDNO,
+        fName: emp[0].employeeProject.workDetail.employee.fName,
+        mName: emp[0].employeeProject.workDetail.employee.mName,
+        lName: emp[0].employeeProject.workDetail.employee.lName,
         regularPD: regularPD,
         regularPH:regularPH,
         regularPOTD: regularPOTD,
         regularPOTH:regularPOTH,
         specialPD:specialPD,
         specialPH:specialPH,
-        OT32: emp.OT32,
+        OT32: OT32H,
         totalDays: totalDays,
-        totalHours:totalHours + parseInt(emp.OT32),
-        month: emp.month,
-        year: emp.year,
-        status: emp.status,
+        totalHours:totalHours,
+        month: emp[0].month,
+        year: emp[0].year,
+        status: emp[0].status,
       };
     });
     return res.status (200).json ({all});
@@ -243,7 +260,7 @@ exports.TestDelete = async (req, res) => {
 
 //     const project = await prisma.project.create ({
 //       data: {
-//         company: {connect: {id:"f8a1739f-2046-46d6-ab1a-327a1b524037"}},
+//         company: {connect: {id:"84f418b5-ac41-4f0b-966c-8db7c1210a93"}},
 //         site: 'Arada Adwa Hall',
 //         noSecurity: 1,
 //         startDate: '2024-09-18T00:00:00Z',
@@ -255,8 +272,8 @@ exports.TestDelete = async (req, res) => {
 // console.log(project.id)
     const projectEmp = await prisma.employeeProject.create ({
       data: {
-        project: {connect: {id: "e0d80849-7110-4640-a489-f664a1951a8f"}},
-        workDetail: {connect: {id: '34e08e39-bcf1-4678-aa29-0a4671e535a5'}},
+        project: {connect: {id: "25ed4d0a-f4be-47ba-937f-aa29a74e703e"}},
+        workDetail: {connect: {id: '5665688a-e079-45ab-a708-0b39c9e4983d'}},
         role: 'guard',
       },
     });

@@ -1,11 +1,39 @@
-const {PrismaClient} = require ('@prisma/client');
-const prisma = new PrismaClient ();
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+const path = require('path');
+const fs = require('fs');
+const { v4: uuidv4 } = require('uuid');
 
-exports.AllProjects = async (req, res) => {
+// Ensure the uploads directory exists
+if (!fs.existsSync('uploads')) {
+  fs.mkdirSync('uploads');
+}
+
+// Controller to handle creating a new project
+const createProject = async (req, res) => {
   try {
-    const projects = await prisma.project.findMany ();
-    return res.status (200).json ({projects});
+    const { name, company, location, noSecurity } = req.body;
+
+    // Handle file uploads
+    const attachments = req.file ? req.file.path : null;
+
+    const newProject = await prisma.project.create({
+      data: {
+        name,
+        company,
+        location,
+        noSecurity,
+        attachments,
+      },
+    });
+
+    res.json(newProject);
   } catch (error) {
-    return res.status (500).json ({message: 'Something went wrong'});
+    console.error('Error adding project:', error);
+    res.status(500).json({ error: 'Failed to add project' });
   }
+};
+
+module.exports = {
+  createProject,
 };

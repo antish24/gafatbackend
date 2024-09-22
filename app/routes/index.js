@@ -32,6 +32,18 @@ const SalaryRoute=require('./salary/SalaryRoute')
 //payroll route
 const PayrollRoute=require('./payroll/PayrollRoute')
 
+//project route
+const projectRoutes=require('./project/ProjectRoute')
+const companyRoutes=require('./project/companyRoutes')
+const planRoutes=require('./project/planRoutes')
+const tenderRoutes=require('./project/tenderRoutes')
+
+//report route
+const reportRoutes=require('./report/reportRoutes')
+
+//asset route
+const InventoryRoute=require('./asset/inventory')
+const RequestRoute=require('./asset/RequestRoute')
 
 router.use('/users',userRoute)
 router.use('/interview',InterviewRoute)
@@ -54,5 +66,15 @@ router.use('/project',ProjectRoute)
 router.use('/salary',SalaryRoute)
 router.use('/payroll',PayrollRoute)
 
+
+router.use('/company', companyRoutes)
+router.use('/project',projectRoutes)
+router.use('/tender', tenderRoutes);
+router.use('/plan', planRoutes);
+
+router.use('/reports', reportRoutes);
+
+router.use('/inventory',InventoryRoute)
+router.use('/request', RequestRoute)
 
 module.exports=router

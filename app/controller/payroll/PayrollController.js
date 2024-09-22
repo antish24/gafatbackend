@@ -19,7 +19,14 @@ exports.GeneratedPayrollList = async (req, res) => {
     const all = await prisma.employeePayroll.findMany ({
       orderBy: {createdAt: 'desc'},
       where: {payrollId: id},
-      include: {employeeWorkDetail: {include: {employee: true,position:{include:{department:{include:{branch:true}}}}}}},
+      include: {
+        employeeWorkDetail: {
+          include: {
+            employee: true,
+            position: {include: {department: {include: {branch: true}}}},
+          },
+        },
+      },
     });
 
     const list = all.map (emp => {
@@ -37,8 +44,12 @@ exports.GeneratedPayrollList = async (req, res) => {
         createdAt: emp.createdAt,
         status: emp.status,
         id: emp.id,
+        basicSalary: emp.employeeWorkDetail.salary,
         salary: emp.salary,
         totalEarning: emp.totalEarning,
+        incomeTax: emp.incomeTax,
+        employeePension: emp.employeePension,
+        employerPension: emp.employerPension,
         grossSalary: emp.grossSalary,
         totalDeduction: emp.totalDeduction,
         netSalary: emp.netSalary,
@@ -56,8 +67,6 @@ exports.GeneratedPayrollList = async (req, res) => {
 exports.GenerateNewPayroll = async (req, res) => {
   const {from, to, project, basedOn} = req.body;
   try {
-    console.log (project);
-
     const employeeProject = await prisma.employeeProject.findMany ({
       where: {projectId: project},
       include: {workDetail: {include: {employee: true}}},
@@ -72,7 +81,7 @@ exports.GenerateNewPayroll = async (req, res) => {
           employeeWorkDetailId: emp.workDetailId,
         },
         include: {
-          employeeWorkDetail: {select: {salary: true}},
+          employeeWorkDetail: true,
           salaryStructureForm: {
             include: {
               salaryStructure: {include: {salaryComponent: true}},
@@ -87,10 +96,10 @@ exports.GenerateNewPayroll = async (req, res) => {
     const newPayroll = await prisma.payroll.create ({
       data: {
         generatedBy: 'ish',
-        basedOn: 'Project',
+        basedOn: basedOn,
         project: {connect: {id: project}},
-        from: '2024-01-20T11:37:36.294Z',
-        to: '2024-02-20T11:37:36.294Z',
+        from: from,
+        to: to,
         ApprovedBy: '',
       },
     });
@@ -98,39 +107,142 @@ exports.GenerateNewPayroll = async (req, res) => {
     const employeePayroll = [];
 
     for (const list of empSalaryStructure) {
-      let earnings = 0;
+      let taxableearnings = 0;
+      let nonTaxableearnings = 0;
+      let pensionearnings = 0;
+
       let deductions = 0;
+
       let grossSalary = 0;
+      let taxableSalary = 0;
+      let pensionableSalary = 0;
+
       let netSalary = 0;
       let salary = 0;
-      
-      list.forEach (async(emp) => {
-        salary=emp.employeeWorkDetail.salary
+
+      let employeeTotalDays = 0;
+      let incomeTaxs = 0;
+      let employeePension = 0;
+      let employerPension = 0;
+
+      list.forEach (async emp => {
+        startDate = emp.employeeWorkDetail.startDate;
+        employeeTotalDays = Math.floor (
+          (Date.now () - startDate.getTime ()) / 86400000
+        );
+        salary = parseInt (emp.employeeWorkDetail.salary);
+        grossSalary = parseInt (emp.employeeWorkDetail.salary);
         emp.salaryStructureForm.salaryStructure.forEach (d => {
           if (d.salaryComponent.type === 'Earning') {
-            earnings += d.amount;
+            if (employeeTotalDays > d.salaryComponent.applicableAfter) {
+              switch (d.salaryComponent.tax) {
+                case 'Yes':
+                  taxableearnings += d.amount;
+                  break;
+                case 'No':
+                  nonTaxableearnings += d.amount;
+                  break;
+                case 'Semi':
+                  switch (d.salaryComponent.semiTaxType) {
+                    case 'Fixed':
+                      if (d.amount > d.salaryComponent.minNonTaxable) {
+                        taxableearnings += d.amount;
+                      } else {
+                        nonTaxableearnings += d.amount;
+                      }
+                      break;
+                    case 'Percent':
+                      if (
+                        d.amount >
+                        salary / (d.salaryComponent.minNonTaxable * 100)
+                      ) {
+                        taxableearnings += d.amount;
+                      } else {
+                        nonTaxableearnings += d.amount;
+                      }
+                      break;
+
+                    default:
+                      break;
+                  }
+                  break;
+                default:
+                  break;
+              }
+              switch (d.salaryComponent.pension) {
+                case 'Yes':
+                  pensionearnings += d.amount;
+                  break;
+                default:
+                  break;
+              }
+            }
           }
+          taxableSalary = taxableearnings + salary;
+          pensionableSalary = pensionearnings + salary;
+          grossSalary = taxableearnings + nonTaxableearnings + salary;
+
           if (d.salaryComponent.type === 'Deduction') {
-            deductions += d.amount;
+            if (employeeTotalDays > d.salaryComponent.applicableAfter) {
+              switch (d.salaryComponent.conditionType) {
+                case 'Deduct':
+                  deductions += d.amount;
+                  break;
+                case 'IncomeTax':
+                  if (taxableSalary > 601 && taxableSalary < 1650) {
+                    incomeTaxs = taxableSalary * 10 / 100 - 60;
+                    deductions += taxableSalary * 10 / 100 - 60;
+                  } else if (taxableSalary > 1650 && taxableSalary < 3200) {
+                    incomeTaxs = taxableSalary * 15 / 100 - 142.5;
+                    deductions += taxableSalary * 15 / 100 - 142.5;
+                  } else if (taxableSalary > 3200 && taxableSalary < 5250) {
+                    incomeTaxs = taxableSalary * 20 / 100 - 302.5;
+                    deductions += taxableSalary * 20 / 100 - 302.5;
+                  } else if (taxableSalary > 5250 && taxableSalary < 7800) {
+                    incomeTaxs = taxableSalary * 25 / 100 - 565;
+                    deductions += taxableSalary * 25 / 100 - 565;
+                  } else if (taxableSalary > 7800 && taxableSalary < 10900) {
+                    console.log ('30' + taxableSalary);
+                    incomeTaxs = taxableSalary * 30 / 100 - 955;
+                    deductions += taxableSalary * 30 / 100 - 955;
+                  }
+                  if (taxableSalary > 10900) {
+                    console.log ('35');
+                    incomeTaxs = taxableSalary * 35 / 100 - 1500;
+                    deductions += taxableSalary * 35 / 100 - 1500;
+                  }
+                  break;
+                case 'Pension':
+                  employeePension += pensionableSalary * 7 / 100;
+                  employerPension += pensionableSalary * 11 / 100;
+                  deductions += pensionableSalary * 7 / 100;
+                  break;
+
+                default:
+                  break;
+              }
+            }
           }
         });
-        grossSalary=parseInt(salary)+parseInt(earnings)
-        netSalary=parseInt(grossSalary)-parseInt(deductions)
+        netSalary = parseInt (grossSalary) - parseInt (deductions);
 
         const salaryStructure = await prisma.employeePayroll.create ({
           data: {
             payroll: {connect: {id: newPayroll.id}},
             employeeWorkDetail: {connect: {id: emp.employeeWorkDetailId}},
-            salary: salary.toString(),
-            totalEarning: earnings.toString (),
-            grossSalary: grossSalary.toString(),
+            salary: salary.toString (),
+            totalEarning: (parseInt (taxableearnings) +
+              parseInt (nonTaxableearnings)).toString (),
+            grossSalary: grossSalary.toString (),
             totalDeduction: deductions.toString (),
-            netSalary: netSalary.toString(),
+            incomeTax: incomeTaxs.toString (),
+            employeePension: employeePension.toString (),
+            employerPension: employerPension.toString (),
+            netSalary: netSalary.toString (),
           },
         });
 
         employeePayroll.push (salaryStructure);
-      
       });
     }
 
