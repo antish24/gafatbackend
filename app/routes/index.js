@@ -45,6 +45,12 @@ const reportRoutes=require('./report/reportRoutes')
 const InventoryRoute=require('./asset/inventory')
 const RequestRoute=require('./asset/RequestRoute')
 
+//dashboard
+const DashboardRoute=require('./dashboard//DashboardRoute')
+
+
+router.use('/dashboard',DashboardRoute)
+
 router.use('/users',userRoute)
 router.use('/interview',InterviewRoute)
 router.use('/vacancy',VacancyRoute)

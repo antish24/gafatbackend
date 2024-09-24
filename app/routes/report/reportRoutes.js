@@ -10,6 +10,7 @@ router.post('/reports', reportController.createReport); // Create a report with 
 router.get('/reports', reportController.getReports); // Get all reports
 //router.get('/reports/:id', reportController.getReportById); // Get a specific report by ID
 router.put('/reports/:id', reportController.updateReport);
+router.get('/analytics', reportController.Analytics);
 
 module.exports = router;
 

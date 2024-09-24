@@ -42,22 +42,20 @@ const getAllCompanies = async (req, res) => {
 
 // Create a new plan
 const createPlan = async (req, res) => {
-    const { securityNo, pricePerSecurity, companyId } = req.body;
-    const attachments = req.files && req.files.length > 0 
-      ? req.files.map(file => file.path).join(', ') // Join paths into a single string
-      : null; // Set to null if no attachments
+    const { noSecurity, price, companyId,site } = req.body;
   
     try {
-      if (!securityNo || !pricePerSecurity || !companyId) {
+      if (!noSecurity || !price || !companyId ||!site) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
   
       const newPlan = await prisma.projectPlan.create({
         data: {
-          securityNo,
-          pricePerSecurity: parseFloat(pricePerSecurity),
-          attachments, // Now will be a string or null
-          companyId: parseInt(companyId),
+          noSecurity:parseInt(noSecurity),
+          site,
+          price: parseFloat(price),
+          attachments:'filename', // Now will be a string or null
+          companyId:companyId,
         },
       });
       res.status(201).json(newPlan);

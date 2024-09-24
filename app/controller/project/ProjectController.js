@@ -1,39 +1,67 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-const path = require('path');
-const fs = require('fs');
-const { v4: uuidv4 } = require('uuid');
+const {PrismaClient} = require ('@prisma/client');
+const prisma = new PrismaClient ();
 
-// Ensure the uploads directory exists
-if (!fs.existsSync('uploads')) {
-  fs.mkdirSync('uploads');
-}
-
-// Controller to handle creating a new project
-const createProject = async (req, res) => {
+exports.AssignEmployee = async (req, res) => {
+  const {project,role,employees} = req.body;
   try {
-    const { name, company, location, noSecurity } = req.body;
-
-    // Handle file uploads
-    const attachments = req.file ? req.file.path : null;
-
-    const newProject = await prisma.project.create({
-      data: {
-        name,
-        company,
-        location,
-        noSecurity,
-        attachments,
-      },
-    });
-
-    res.json(newProject);
+    console.log(role,employees,project)
+    const findProject = await prisma.project.findUnique ({
+        where: {
+          id: project,
+        },
+      });
+      if (!findProject) {
+        return res.status (401).json ({message: "Project not found"});
+      }
+  
+     employees.forEach (async emp => {
+      await prisma.employeeProject.create({data: {
+        workDetail: {
+          connect: {id: emp},
+        },
+        role,
+        project: {
+          connect: {id: project},
+        },
+      }});
+    })
+    return res.status (200).json ({message:'Employees Assigned Successfully'});
   } catch (error) {
-    console.error('Error adding project:', error);
-    res.status(500).json({ error: 'Failed to add project' });
+    console.log(error)
+    return res.status (500).json ({message: 'Something went wrong'});
   }
 };
 
-module.exports = {
-  createProject,
-};
+exports.ProjectEmployee = async (req, res) => {
+    const {project} = req.query;
+    try {
+      const findProjectEmployees = await prisma.employeeProject.findMany ({
+          where: {
+            projectId: project,
+          },
+          include:{workDetail:{include:{employee:true,position:true}}}
+        });
+        if (!findProjectEmployees) {
+          return res.status (401).json ({message: "Project not found"});
+        }
+
+        const employees = findProjectEmployees.map (emp => {
+          return {
+            IDNO: emp.workDetail.employee.IDNO,
+            fName: emp.workDetail.employee.fName,
+            mName: emp.workDetail.employee.mName,
+            lName: emp.workDetail.employee.lName,
+            sex: emp.workDetail.employee.sex,
+            position: emp.workDetail.position.name,
+            status: emp.status,
+            assignedAt: emp.createdAt,
+            role: emp.role,
+            id: emp.id,
+          }})
+
+      return res.status (200).json ({employees});
+    } catch (error) {
+      console.log(error)
+      return res.status (500).json ({message: 'Something went wrong'});
+    }
+  };

@@ -12,6 +12,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const { PrismaClient } = require('@prisma/client');
+const projectController=require('../../controller/project/projectController') 
 
 const prisma = new PrismaClient();
 
@@ -21,29 +22,28 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // Adjust file size limit if needed
 });
 
+router.post('/assignemployee',projectController.AssignEmployee)
+router.get('/employees',projectController.ProjectEmployee)
+
 // POST route to add a project
 router.post('/add', upload.single('attachments'), async (req, res) => {
   try {
-    const { name, company, location, noSecurity } = req.body;
-    // Handle attachment
-    const attachments = req.file ? req.file.path : 'default/path/to/attachment';
+    const { site, company, startDate,endDate, noSecurity,attachments,price } = req.body;
 
-    // Check if all required fields are present
-    if (!name || !company || !location || !noSecurity) {
-      return res.status(400).json({ error: 'All fields are required' });
-    }
-
-    const newProject = await prisma.project.create({
+    // Handle file uploads
+    await prisma.project.create({
       data: {
-        name,
-        company,
-        location,
-        noSecurity,
-        attachments, // Use the path of the uploaded file or default path
+        site,
+        companyId:company,
+        startDate:startDate+"T00:00:00Z",
+        endDate:endDate+"T00:00:00Z",
+        price:parseInt(price),
+        noSecurity:parseInt(noSecurity),
+        attachments:'file',
       },
     });
+    res.json({message:'Project Created'});
 
-    res.json(newProject);
   } catch (error) {
     console.error('Error adding project:', error);
     res.status(500).json({ error: 'Failed to add project' });
@@ -53,8 +53,8 @@ router.post('/add', upload.single('attachments'), async (req, res) => {
 // GET route to fetch all projects
 router.get('/all', async (req, res) => {
   try {
-    const projects = await prisma.project.findMany();
-    res.json(projects);
+    const projects = await prisma.project.findMany({include:{company:true}});
+    res.json({projects});
   } catch (error) {
     console.error('Error fetching projects:', error);
     res.status(500).json({ error: 'Failed to fetch projects' });
@@ -66,12 +66,12 @@ router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const project = await prisma.project.findUnique({
-      where: { id: parseInt(id) }, // Ensure the ID is converted to an integer
+      where: { id: id }, // Ensure the ID is converted to an integer
     });
 
-    const projectEmp = await prisma.projectEmployee.findMany({
-      where: { projectId: parseInt(id) },
-      include: { employee: true }, // Include employee details
+    const projectEmp = await prisma.employeeProject.findMany({
+      where: { projectId: id },
+      include: { workDetail: true }, // Include employee details
     });
 
     if (!project) {
@@ -257,10 +257,10 @@ router.post('/:id/add-team', async (req, res) => {
     await prisma.$transaction(assignments);
 
     // Fetch updated project with assigned employees
-    const updatedProject = await prisma.projectEmployee.findMany({
-      where: { projectId: parseInt(id) },
+    const updatedProject = await prisma.employeeProject.findMany({
+      where: { projectId: id },
       include: {
-        project: {include:{employees:true}
+        workDetail: {include:{employees:true}
           // include: {
           //   employee: {
           //     select: {
@@ -288,13 +288,13 @@ router.post('/:id/add-team', async (req, res) => {
 
 // Fetch team members for a specific project
 router.get('/:id/team', async (req, res) => {
-  const projectId = parseInt(req.params.id);
+  const projectId = req.params.id;
 
   try {
-    const team = await prisma.projectEmployee.findMany({
+    const team = await prisma.employeeProject.findMany({
       where: { projectId },
       include: {
-        employee: true, // Include employee details
+        workDetail: true, // Include employee details
       },
     });
 

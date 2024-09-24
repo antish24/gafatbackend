@@ -89,6 +89,36 @@ exports.AllEmployeeNames = async (req, res) => {
   }
 };
 
+exports.FindEmployeeNames = async (req, res) => {
+  const {position}=req.query
+  try {
+    const rawEmployees = await prisma.employeeWorkDetail.findMany ({
+      where:{
+        positionId:position
+      },
+      include: {
+        employee: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const employees = rawEmployees.map (emp => {
+      return {
+        id: emp.id,
+        IDNO: emp.employee.IDNO,
+        fName: emp.employee.fName,
+        mName: emp.employee.mName,
+        lName: emp.employee.lName,
+      };
+    });
+    return res.status (200).json ({employees});
+  } catch (error) {
+    return res.status (500).json ({message: 'Something went wrong'});
+  }
+};
+
 exports.NewEmployee = async (req, res) => {
   const {
     fName,

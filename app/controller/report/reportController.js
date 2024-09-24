@@ -8,7 +8,7 @@ exports.createReport = async (req, res) => {
     try {
         // Destructure the expected fields from the request body
         const { userId, date, shiftTime, location, report, description, reportMeasurement, status } = req.body;
-
+        console.log(userId,date,report)
         // Convert userId to an integer
         //const userIdInt = parseInt(userId, 10);
 
@@ -23,7 +23,7 @@ exports.createReport = async (req, res) => {
         const newReport = await prisma.dailyReport.create({
             data: {
                 userId: userId, // Use the integer userId
-                date: new Date(date),
+                date: date,
                 shiftTime,
                 location,
                 report,
@@ -95,6 +95,51 @@ exports.updateReport = async (req, res) => {
         });
 
         res.status(200).json(updatedReport);
+    } catch (error) {
+        console.error('Error updating report:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
+exports.Analytics = async (req, res) => {
+    try {
+        const measurementStats = await prisma.dailyReport.groupBy({
+            by: ['reportMeasurement'],
+            _count: {
+                reportMeasurement: true,
+            },
+        });
+
+        // Aggregate by location
+        const locationStats = await prisma.dailyReport.groupBy({
+            by: ['location'],
+            _count: {
+                location: true,
+            },
+        });
+
+        // Aggregate by shift time
+        const shiftStats = await prisma.dailyReport.findMany({
+            select: {
+                shiftTime: true,
+            },
+        });
+
+        // Aggregate by date
+        const dateStats = await prisma.dailyReport.groupBy({
+            by: ['date'],
+            _count: {
+                date: true,
+            },
+        });
+
+        res.json({
+            measurementStats,
+            locationStats,
+            shiftStats,
+            dateStats,
+        });
     } catch (error) {
         console.error('Error updating report:', error);
         res.status(500).json({ error: error.message });
