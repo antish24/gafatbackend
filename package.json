@@ -13,8 +13,7 @@
   "scripts": {
     "start": "npx prisma generate && nodemon app.js ",
     "migrate": "npx prisma migrate dev",
-    "dbpush": "npx prisma db push",
-    "postinstall": "npx run generate"
+    "dbpush": "npx prisma db push"
   },
   "dependencies": {
     "@prisma/client": "^5.19.1",
