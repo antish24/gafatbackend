@@ -77,6 +77,7 @@ exports.AllEmployeeNames = async (req, res) => {
     const employees = rawEmployees.map (emp => {
       return {
         id: emp.id,
+        empId: emp.employee.id,
         IDNO: emp.employee.IDNO,
         fName: emp.employee.fName,
         mName: emp.employee.mName,

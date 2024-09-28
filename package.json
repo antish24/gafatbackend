@@ -1,17 +1,17 @@
 {
   "name": "backend-api",
   "version": "1.0.0",
-  "description": "blacklist api",
+  "description": "erp api",
   "main": "app.js",
   "author": "Anteneh A",
   "apidoc": {
-    "title": "Review Byte apiDoc",
+    "title": "ERP apiDoc",
     "url": "http://localhost:2024"
   },
   "license": "MIT",
   "private": true,
   "scripts": {
-    "start": "npm i prisma && npx prisma generate && nodemon app.js ",
+    "start": "nodemon app.js ",
     "migrate": "npx prisma migrate dev",
     "dbpush": "npx prisma db push"
   },
