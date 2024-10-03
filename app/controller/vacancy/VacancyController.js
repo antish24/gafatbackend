@@ -54,9 +54,34 @@ async function GenerateIdNoEmployee (prefixname) {
 
 exports.AllVacancy = async (req, res) => {
   try {
-    const vacancys = await prisma.vacancy.findMany ();
+    const rawData = await prisma.vacancy.findMany ({include:{position:{include:{department:{include:{branch:true}}}}}});
+   
+    const vacancys = rawData.map (d => {
+      return {
+        id: d.id,
+        IDNO: d.IDNO,
+        position: d.position.name,
+        department: d.position.department.name,
+        branch: d.position.department.branch.name,
+        title: d.title,
+        vacancyNo: d.vacancyNo,
+        vacancyType: d.vacancyType,
+        employementType: d.employementType,
+        experience: d.experience,
+        interviewId: d.interviewId,
+        salary: d.salary,
+        sector: d.sector,
+        status: d.status,
+        deadline: d.deadline,
+        description: d.description,
+        gender: d.gender,
+        createdAt: d.createdAt,
+        updatedAt: d.updatedAt,
+      };
+    });
     return res.status (200).json ({vacancys});
   } catch (error) {
+    console.log(error)
     return res.status (500).json ({message: 'Something went wrong'});
   }
 };
@@ -203,9 +228,32 @@ exports.AddApplicant = async (req, res) => {
 exports.VacancyDetail = async (req, res) => {
   const {id} = req.query;
   try {
-    const vacancy = await prisma.vacancy.findUnique ({where: {IDNO: id}});
-    return res.status (200).json ({vacancy});
+    const d = await prisma.vacancy.findUnique ({where: {IDNO: id},include:{position:{include:{department:{include:{branch:true}}}}}});
+    const vacancy ={
+        id: d.id,
+        IDNO: d.IDNO,
+        position: d.position.id,
+        department: d.position.department.id,
+        branch: d.position.department.branch.id,
+        title: d.title,
+        vacancyNo: d.vacancyNo,
+        vacancyType: d.vacancyType,
+        employementType: d.employementType,
+        experience: d.experience,
+        interviewId: d.interviewId,
+        salary: d.salary,
+        sector: d.sector,
+        status: d.status,
+        deadline: d.deadline,
+        description: d.description,
+        gender: d.gender,
+        createdAt: d.createdAt,
+        updatedAt: d.updatedAt,
+      };
+
+      return res.status (200).json ({vacancy});
   } catch (error) {
+    console.log(error)
     return res.status (500).json ({message: 'Something went wrong'});
   }
 };
@@ -234,7 +282,6 @@ exports.NewVacancy = async (req, res) => {
     employementType,
     interview,
     gender,
-    location,
     sector,
     experience,
     deadline,
@@ -248,14 +295,15 @@ exports.NewVacancy = async (req, res) => {
       data: {
         IDNO: IDNO,
         title,
-        position,
         vacancyType,
         employementType,
         interview: {
           connect: {id: interview},
         },
+        position: {
+          connect: {id: position},
+        },
         gender,
-        location,
         sector,
         experience,
         deadline,
@@ -280,7 +328,6 @@ exports.UpdateVacancy = async (req, res) => {
     employementType,
     interview,
     gender,
-    location,
     sector,
     experience,
     deadline,
@@ -293,14 +340,15 @@ exports.UpdateVacancy = async (req, res) => {
       where: {IDNO: IDNO},
       data: {
         title,
-        position,
         vacancyType,
         employementType,
         interview: {
           connect: {id: interview},
         },
+        position: {
+          connect: {id: position},
+        },
         gender,
-        location,
         sector,
         experience,
         deadline,
@@ -311,7 +359,7 @@ exports.UpdateVacancy = async (req, res) => {
     });
     return res.status (200).json ({message: 'Vacancy Updated'});
   } catch (error) {
-    console.log (error);
-    return res.status (500).json ({message: 'Sth Went Wrong'});
+    console.log (error.message);
+    return res.status (500).json ({message:error.message});
   }
 };

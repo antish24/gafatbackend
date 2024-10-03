@@ -5,6 +5,7 @@ const router=express.Router()
 
 //Timesheet routes
 const TimeSheetRoute=require('./timesheet/TimeSheetRoute')
+const UploadRoute=require('./upload/UploadRoute')
 
 //Timesheet routes
 const ProjectRoute=require('./project/ProjectRoute')
@@ -33,7 +34,7 @@ const SalaryRoute=require('./salary/SalaryRoute')
 const PayrollRoute=require('./payroll/PayrollRoute')
 
 //project route
-const projectRoutes=require('./project/ProjectRoute')
+const projectRoutes=require('./project/projectRoute')
 const companyRoutes=require('./project/companyRoutes')
 const planRoutes=require('./project/planRoutes')
 const tenderRoutes=require('./project/tenderRoutes')
@@ -49,6 +50,7 @@ const RequestRoute=require('./asset/RequestRoute')
 const DashboardRoute=require('./dashboard//DashboardRoute')
 
 
+router.use('/upload',UploadRoute)
 router.use('/dashboard',DashboardRoute)
 
 // router.use('/users',userRoute)

@@ -18,13 +18,13 @@ model Vacancy {
   id              String        @id @default(uuid())
   IDNO            String        @unique
   title           String
-  position        String
   vacancyType     String
   employementType String
   interview       Interview     @relation(fields: [interviewId], references: [id])
   interviewId     String
+  position        Position      @relation(fields: [positionId], references: [id])
+  positionId      String
   gender          Sex
-  location        String
   sector          String
   experience      String
   deadline        DateTime
@@ -36,7 +36,7 @@ model Vacancy {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  @@unique([position, deadline, gender, vacancyType, employementType])
+  @@unique([positionId, deadline, gender, vacancyType, employementType])
 }
 
 model Applicant {
@@ -57,14 +57,16 @@ model Applicant {
 }
 
 model Interview {
-  id        String          @id @default(uuid())
-  IDNO      String          @unique
-  title     String
-  questions Question[]
-  vacancy   Vacancy[]
-  status    InterviewStatus @default(Active)
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  id         String          @id @default(uuid())
+  IDNO       String          @unique
+  title      String
+  position   Position        @relation(fields: [positionId], references: [id])
+  positionId String
+  questions  Question[]
+  vacancy    Vacancy[]
+  status     InterviewStatus @default(Active)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
 }
 
 model ApplicantInterview {
@@ -124,6 +126,8 @@ model Position {
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
   EmployeeWorkDetail EmployeeWorkDetail[]
+  interview          Interview[]
+  vacancy            Vacancy[]
 }
 
 model Employee {
@@ -138,6 +142,7 @@ model Employee {
   sex                   EmployeeSex
   status                EmployeeStatus                 @default(Active)
   Profile               EmployeeProfile?
+  fingerPrint           EmployeeFingerPrint?
   address               EmployeeAddress?
   contact               EmployeeContact?
   relatedInfo           EmployeeRelatedInfo?
@@ -146,8 +151,8 @@ model Employee {
   leaveBalance          LeaveBalance?
   leaveApplication      LeaveApplication[]
   workHistory           EmployeeWorkHistory?
-  requests    Request[] // One employee can have many requests
-  returns     Return[]
+  requests              Request[] // One employee can have many requests
+  returns               Return[]
   createdAt             DateTime                       @default(now())
   updatedAt             DateTime                       @updatedAt
 
@@ -161,6 +166,16 @@ model EmployeeProfile {
   employeeId String   @unique
   IDFront    String
   IDBack     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model EmployeeFingerPrint {
+  id         String   @id @default(uuid())
+  image      String
+  features   Json
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId String   @unique
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
@@ -516,8 +531,6 @@ model EmployeePayroll {
 
 //end
 
-
-
 model Inventory {
   id          Int       @id @default(autoincrement())
   name        String
@@ -530,37 +543,34 @@ model Inventory {
   updatedAt   DateTime  @updatedAt
 }
 
-
 model Tender {
-  id            Int      @id @default(autoincrement())
-  title         String
-  description   String
-  deadline      DateTime
-  budget        Float
-  status        String
-  attachments    String
-  companyName   String
-  startingDate  DateTime
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  title        String
+  description  String
+  deadline     DateTime
+  budget       Float
+  status       String
+  attachments  String
+  companyName  String
+  startingDate DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
-
 
 model DailyReport {
-  id              Int      @id @default(autoincrement())
-  userId          String
-  date            DateTime
-  shiftTime       String
-  location        String
-  report          String
-  description     String   // New field for description
-  reportMeasurement String  // New field for report measurement
-  status          String   @default("Pending")
-  attachments     String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                Int      @id @default(autoincrement())
+  userId            String
+  date              DateTime
+  shiftTime         String
+  location          String
+  report            String
+  description       String // New field for description
+  reportMeasurement String // New field for report measurement
+  status            String   @default("Pending")
+  attachments       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
-
 
 model Return {
   id          Int       @id @default(autoincrement())
@@ -573,7 +583,6 @@ model Return {
   request     Request   @relation(fields: [requestId], references: [id])
   employee    Employee  @relation(fields: [employeeId], references: [id]) // Add this line
 }
-
 
 model Request {
   id          Int       @id @default(autoincrement())

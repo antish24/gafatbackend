@@ -30,9 +30,21 @@ async function GenerateIdNo (prefixname) {
 
 exports.AllInterview = async (req, res) => {
   try {
-    const interviews = await prisma.interview.findMany ();
+    const interviews = await prisma.interview.findMany ({include:{position:{include:{department:{include:{branch:true}}}}}});
     return res.status (200).json ({interviews});
   } catch (error) {
+    console.log(error)
+    return res.status (500).json ({message: 'Something went wrong'});
+  }
+};
+
+exports.FindInterview = async (req, res) => {
+  const {position}=req.query
+  try {
+    const interviews = await prisma.interview.findMany ({where:{positionId:position}});
+    return res.status (200).json ({interviews});
+  } catch (error) {
+    console.log(error)
     return res.status (500).json ({message: 'Something went wrong'});
   }
 };
@@ -40,7 +52,7 @@ exports.AllInterview = async (req, res) => {
 exports.InterviewDetail = async (req, res) => {
   const {id} = req.query;
   try {
-    const interview = await prisma.interview.findUnique ({where: {IDNO: id}});
+    const interview = await prisma.interview.findUnique ({where: {IDNO: id},include:{position:{include:{department:{include:{branch:true}}}}}});
     const interviewQ = await prisma.question.findMany({where: {interviewId: interview.id}});
 
     return res.status (200).json ({interview,interviewQ});
@@ -51,7 +63,7 @@ exports.InterviewDetail = async (req, res) => {
 };
 
 exports.NewInterview = async (req, res) => {
-  const {title, questions} = req.body;
+  const {title, questions,position} = req.body;
 
   try {
     const IDNO = await GenerateIdNo ('IVHR-00001');
@@ -59,6 +71,9 @@ exports.NewInterview = async (req, res) => {
         data: {
           IDNO: IDNO,
           title,
+          position: {
+            connect: {id: position},
+          },
         },
       })
 
@@ -122,13 +137,16 @@ exports.InterviewApplicant = async (req, res) => {
 };
 
 exports.InterviewUpdate = async (req, res) => {
-  const {title, questions,IDNO} = req.body;
+  const {title, questions,IDNO,position} = req.body;
 
   try {
       const interview=await prisma.interview.update ({
         where: {IDNO: IDNO},
         data: {
           title,
+          position: {
+            connect: {id: position},
+          },
         },
       })
 

@@ -7,6 +7,7 @@ const auth=require('../../middleware/auth')
 router.post('/hire',EmployeeController.HireEmployee)
 router.post('/new',EmployeeController.NewEmployee)
 router.get('/all',EmployeeController.AllEmployee)
+router.get('/detail/personalinfo',EmployeeController.EmployeePersonalInfo)
 router.get('/names',EmployeeController.AllEmployeeNames)
 router.get('/find',EmployeeController.FindEmployeeNames)
 

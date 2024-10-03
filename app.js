@@ -10,21 +10,21 @@ const PORT=config.PORT
 app.use(cors())
 app.use(express.json());
 
-// db.connect(error => {
-//     if(error) {
-//       console.error('Error connecting to MySQL: ', error);
-//       return;
-//     }
+db.connect(error => {
+    if(error) {
+      console.error('Error connecting to MySQL: ', error);
+      return;
+    }
   
-//     console.log('MySQL connected!');
-//   });
+    console.log('MySQL connected!');
+  });
   
-//   db.on('error', error => {
-//     console.error('MySQL error: ', error);
-//   });
+  db.on('error', error => {
+    console.error('MySQL error: ', error);
+  });
 
 app.use('/',routers)
-app.use('/upload', express.static(path.join(__dirname, '/upload')));
+app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 app.listen(PORT,()=>{
     console.log("server is running on port"+PORT)
 })

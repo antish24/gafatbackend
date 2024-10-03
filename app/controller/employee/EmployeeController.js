@@ -63,6 +63,36 @@ exports.AllEmployee = async (req, res) => {
   }
 };
 
+exports.EmployeePersonalInfo = async (req, res) => {
+  const {id}=req.query;
+  try {
+    const emp = await prisma.employeeProfile.findFirst ({
+      where:{employee:{IDNO:id}},
+      include: {
+        employee: true,
+      },
+    });
+
+    const employee ={ 
+        IDNO: emp.employee.IDNO,
+        fName: emp.employee.fName,
+        mName: emp.employee.mName,
+        lName: emp.employee.lName,
+        sex: emp.employee.sex,
+        dateOfBirth: emp.employee.dateOfBirth,
+        nationality: emp.employee.nationality,
+        IDBack: emp.IDBack,
+        IDFront: emp.IDFront,
+        profile: emp.profile,
+      };
+
+      return res.status (200).json ({employee});
+  } catch (error) {
+    console.log(error)
+    return res.status (500).json ({message: 'Something went wrong'});
+  }
+};
+
 exports.AllEmployeeNames = async (req, res) => {
   try {
     const rawEmployees = await prisma.employeeWorkDetail.findMany ({
@@ -156,6 +186,40 @@ exports.NewEmployee = async (req, res) => {
     IDB,
   } = req.body;
   try {
+
+    const requiredFields = [
+      'fName',
+      'mName',
+      'dateOfBirth',
+      'sex',
+      'nationality',
+      'city',
+      'subCity',
+      'wereda',
+      'kebele',
+      'houseNo',
+      'phone',
+      'position',
+      'employementType',
+      'shift',
+      'salary',
+      'startDate',
+      'agreement',
+      'medicalReport',
+      'fingerPrintReport',
+      'profilePhoto',
+      'IDF',
+      'IDB',
+    ];
+    
+    // Check for missing required fields
+    for (const field of requiredFields) {
+      if (!req.body[field]) {
+        return res.status(401).json({ message: `Missing Input: ${field}` });
+      }
+    }
+
+
     const IDNO = await GenerateIdNo ('EMPHR-00001');
 
     const employeeID = await prisma.employee.create ({
@@ -167,6 +231,14 @@ exports.NewEmployee = async (req, res) => {
         dateOfBirth,
         sex,
         nationality,
+      },
+    });
+
+    await prisma.employeeFingerPrint.create ({
+      data: {
+        employee: {connect: {id: employeeID.id}},
+        features:fingerPrintReport.response.features,
+        image: fingerPrintReport.name,
       },
     });
 
@@ -234,6 +306,7 @@ exports.NewEmployee = async (req, res) => {
     });
     return res.status (200).json ({message: 'Employee Created'});
   } catch (error) {
+    console.log(error)
     return res.status (500).json ({message: 'Sth Went Wrong'});
   }
 };

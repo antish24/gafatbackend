@@ -14,49 +14,24 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 exports.createCompany = [
-  upload.single('license'), // Middleware to handle single file upload
   async (req, res) => {
     try {
-      const { name, tin, vat, city, subcity, woreda, houseNo, phone, email } = req.body;
-      const licenseFile = req.file ? req.file.filename : null;
-
-      // Validate and fallback to empty string if undefined
-      const companyData = {
-        name: name || '', // Fallback to empty string if undefined
-        // location: location || '',
-        TIN: tin || '',
-        VAT: vat || '',
-        license: licenseFile, // License can be null if not uploaded
-        createdAt: new Date(),
-        phone: phone || '',
-        email: email || '' ,
-        profile:"pic",
-      };
-
-      
-
-      if (!companyData.name) {
-        return res.status(400).json({ message: 'Company name is required' });
-      }
+      const { name, TIN, VAT,license,profile, city, subCity, wereda, houseNo, phone, email,kebele, } = req.body;
 
       // Create the company record using Prisma
       const newCompany = await prisma.company.create({
-        data: companyData,
+        data:{
+          name,TIN,VAT,license,profile,phone,email
+        },
       });
 
-      const companyDataAddress = {
-        city: city || '',
-        companyId:newCompany.id,
-        subCity: subcity || '',
-        wereda: woreda || '',
-        kebele: woreda || '',
-        houseNo: houseNo || '',
-      };
       await prisma.companyAddress.create({
-        data: companyDataAddress,
+        data: {
+          wereda,kebele,city,subCity,houseNo,companyId:newCompany.id
+        },
       });
 
-      res.status(201).json({ message: 'Company created successfully', data: newCompany });
+      res.status(201).json({ message: 'Company created successfully'});
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Failed to create company', error });
@@ -134,7 +109,7 @@ exports.getCompanies = async (req, res) => {
         companyAddress: true, // Include the related company address
       },
     });
-    res.status(200).json(companies);
+    res.status(200).json({companies});
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Failed to retrieve companies', error });
