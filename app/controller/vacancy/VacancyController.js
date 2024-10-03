@@ -55,7 +55,6 @@ async function GenerateIdNoEmployee (prefixname) {
 exports.AllVacancy = async (req, res) => {
   try {
     const rawData = await prisma.vacancy.findMany ({include:{position:{include:{department:{include:{branch:true}}}}}});
-   
     const vacancys = rawData.map (d => {
       return {
         id: d.id,
