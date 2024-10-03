@@ -8,7 +8,7 @@ const TimeSheetRoute=require('./timesheet/TimeSheetRoute')
 const UploadRoute=require('./upload/UploadRoute')
 
 //Timesheet routes
-const ProjectRoute=require('./project/ProjectRoute')
+const ProjectRoute=require('./project/projectRoute')
 
 //vacancy routes
 const VacancyRoute=require('./vacancy/VacancyRoute')
