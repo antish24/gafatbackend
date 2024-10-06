@@ -1,0 +1,2 @@
+﻿"IDNO","fName","mName","lName","sex","dateOfBirth","nationality","status","registered","employementType","shift","salary","startDate","position","department","branch"
+"EMPHR-00001","Abera","Mulu","Aseffa","Male","2024-09-14T07:00:00.000Z","Ethiopian","Active","2024-09-13T11:22:35.933Z","Full Time","Security","10000","2024-09-13T11:21:46.200Z","Security Guard","Security","Arada Adwa"

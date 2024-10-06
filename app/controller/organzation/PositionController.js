@@ -58,6 +58,10 @@ exports.NewPostion = async (req, res) => {
 
   try {
     const IDNO = await GenerateIdNo ('POHR-00001');
+    const FindPositionName=await prisma.position.findFirst({where:{name:{contains:name},departmentId:department}})
+    if (FindPositionName) {
+    return res.status (401).json ({message: 'Position Name Exist'});
+    }
     await prisma.position.create ({
       data: {
         IDNO: IDNO,

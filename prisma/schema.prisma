@@ -69,6 +69,18 @@ model Interview {
   updatedAt  DateTime        @updatedAt
 }
 
+model Agreement {
+  id         String          @id @default(uuid())
+  IDNO       String          @unique
+  title      String
+  position   Position        @relation(fields: [positionId], references: [id])
+  positionId String
+  articles   Articles[]
+  status     InterviewStatus @default(Active)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+}
+
 model ApplicantInterview {
   id          String    @id @default(uuid())
   questions   String
@@ -89,6 +101,14 @@ model Question {
   maxValue    Int
   interview   Interview @relation(fields: [interviewId], references: [id])
   interviewId String
+}
+
+model Articles {
+  id          String    @id @default(uuid())
+  name        String
+  description String
+  agreement   Agreement @relation(fields: [agreementId], references: [id])
+  agreementId String
 }
 
 model Branch {
@@ -127,7 +147,19 @@ model Position {
   updatedAt          DateTime             @updatedAt
   EmployeeWorkDetail EmployeeWorkDetail[]
   interview          Interview[]
+  agreement          Agreement[]
   vacancy            Vacancy[]
+}
+
+model BusinessInfo {
+  id      String @id @default(uuid())
+  name    String 
+  phone   String
+  email   String
+  VAT     String
+  TIN     String
+  license String
+  profile String
 }
 
 model Employee {
@@ -172,8 +204,7 @@ model EmployeeProfile {
 
 model EmployeeFingerPrint {
   id         String   @id @default(uuid())
-  image      String
-  features   Json
+  features   String
   employee   Employee @relation(fields: [employeeId], references: [id])
   employeeId String   @unique
   createdAt  DateTime @default(now())
@@ -218,11 +249,35 @@ model EmployeeWorkDetail {
   positionId              String
   employee                Employee                 @relation(fields: [employeeId], references: [id])
   employeeId              String                   @unique
+  witnesses               Witnesses[]
   Project                 EmployeeProject[]
   employeePayroll         EmployeePayroll[]
+  employeeDiscipline      EmployeeDiscipline[]
   employeeSalaryStructure EmployeeSalaryStructure?
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
+}
+
+model EmployeeDiscipline {
+  id             String                   @id @default(uuid())
+  IDNO           String                   @unique
+  incidentDate   DateTime
+  description    String
+  attachment     String?
+  employeeWork   EmployeeWorkDetail       @relation(fields: [employeeWorkId], references: [id])
+  employeeWorkId String
+  status         EmployeeDisciplineStatus @default(Pending)
+  witnesses      Witnesses[]
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+}
+
+model Witnesses {
+  id                   String             @id @default(uuid())
+  employeeWork         EmployeeWorkDetail @relation(fields: [employeeWorkId], references: [id])
+  employeeWorkId       String
+  employeeDiscipline   EmployeeDiscipline @relation(fields: [employeeDisciplineId], references: [id])
+  employeeDisciplineId String
 }
 
 model EmployeeRelatedInfo {
@@ -265,6 +320,27 @@ model EmployeeWorkHistory {
   endDate    DateTime
   employee   Employee @relation(fields: [employeeId], references: [id])
   employeeId String   @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model DocType {
+  id        String    @id @default(uuid())
+  name      String
+  docFile   DocFile[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model DocFile {
+  id         String   @id @default(uuid())
+  IDNO       String   @unique
+  docRef     String   @unique
+  name       String
+  author     String
+  type       DocType  @relation(fields: [typeId], references: [id])
+  typeId     String
+  attachment String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
@@ -493,44 +569,6 @@ model EmployeePayroll {
   updatedAt            DateTime           @updatedAt
 }
 
-//hiiiiiiiiiiiii
-
-// model Company {
-//   id        Int      @id @default(autoincrement())
-//   name      String   @db.VarChar(255)
-//   location  String   @db.VarChar(255)
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-
-//   @@map("companies") // Explicitly map the model to a table named 'companies'
-// }
-
-// model Project {
-//   id          Int                @id @default(autoincrement())
-//   name        String
-//   company     String
-//   location    String
-//   noSecurity  String
-//   attachments String             // This is a placeholder for file storage path or URL
-//   createdAt   DateTime            @default(now())
-//   updatedAt   DateTime            @updatedAt
-//   employees   ProjectEmployee[]   // Relationship to ProjectEmployee join table
-// }
-
-// model ProjectEmployee {
-//   projectId   Int
-//   employeeId  Int
-//   assignedAt  DateTime            @default(now())
-//   status      String   @default("Active") // Add the status field with default value
-//   role        String   @default("null")
-//   project     Project  @relation(fields: [projectId], references: [id])
-//   employee    Employee @relation(fields: [employeeId], references: [id])
-
-//   @@id([projectId, employeeId])   // Composite key for many-to-many relationship
-// }
-
-//end
-
 model Inventory {
   id          Int       @id @default(autoincrement())
   name        String
@@ -639,6 +677,12 @@ enum ProjectStatus {
 }
 
 enum ProjectPlanStatus {
+  Approved
+  Failed
+  Pending
+}
+
+enum EmployeeDisciplineStatus {
   Approved
   Failed
   Pending

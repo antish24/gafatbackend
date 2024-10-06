@@ -165,7 +165,7 @@ exports.InterviewUpdate = async (req, res) => {
         });
       })
 
-    return res.status (200).json ({message: 'Interview Created'});
+    return res.status (200).json ({message: 'Interview Updated'});
   } catch (error) {
     console.log (error);
     return res.status (500).json ({message: 'Sth Went Wrong'});

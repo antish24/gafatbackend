@@ -15,6 +15,7 @@ const VacancyRoute=require('./vacancy/VacancyRoute')
 const InterviewRoute=require('./vacancy/InterviewRoute')
 
 //organzation routes
+const businessInfoRoute=require('./organzation/businessInfoRoute')
 const BranchRoute=require('./organzation/BranchRoute')
 const DepartmentRoute=require('./organzation/DepartmentRoute')
 const PositionRoute=require('./organzation/PositionRoute')
@@ -41,6 +42,7 @@ const tenderRoutes=require('./project/tenderRoutes')
 
 //report route
 const reportRoutes=require('./report/reportRoutes')
+const DocRoute=require('./doc/DocRoute')
 
 //asset route
 const InventoryRoute=require('./asset/inventory')
@@ -57,9 +59,13 @@ router.use('/dashboard',DashboardRoute)
 router.use('/interview',InterviewRoute)
 router.use('/vacancy',VacancyRoute)
 
+router.use('/organzation/business',businessInfoRoute)
 router.use('/organzation/branch',BranchRoute)
 router.use('/organzation/department',DepartmentRoute)
 router.use('/organzation/position',PositionRoute)
+
+router.use('/doc',DocRoute)
+
 
 router.use('/leave',LeaveRoute)
 router.use('/leave/application',LeaveApplicationRoute)

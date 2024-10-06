@@ -25,6 +25,30 @@ async function GenerateIdNo (prefixname) {
   return code + '-' + number;
 }
 
+async function GenerateDisciplineIdNo (prefixname) {
+  // Get last id doc
+  const lastDoc = await prisma.employeeDiscipline.findFirst ({
+    orderBy: {
+      createdAt: 'desc',
+    },
+    take: 1,
+  });
+
+  if (!lastDoc) return prefixname;
+  // Extract code and number
+  const code = lastDoc.IDNO.split ('-')[0];
+  let number = lastDoc.IDNO.split ('-')[1];
+
+  // Increment number
+  number = parseInt (number) + 1;
+
+  // Pad with zeros
+  number = number.toString ().padStart (5, '0');
+
+  // Return new id
+  return code + '-' + number;
+}
+
 exports.AllEmployee = async (req, res) => {
   try {
     const rawEmployees = await prisma.employeeWorkDetail.findMany ({
@@ -237,8 +261,7 @@ exports.NewEmployee = async (req, res) => {
     await prisma.employeeFingerPrint.create ({
       data: {
         employee: {connect: {id: employeeID.id}},
-        features:fingerPrintReport.response.features,
-        image: fingerPrintReport.name,
+        features:fingerPrintReport,
       },
     });
 
@@ -301,7 +324,7 @@ exports.NewEmployee = async (req, res) => {
         ethnicGroup,
         bloodGroup,
         medicalReport: medicalReport.name,
-        fingerPrintReport: fingerPrintReport.name,
+        fingerPrintReport: fingerPrintReport,
       },
     });
     return res.status (200).json ({message: 'Employee Created'});
@@ -395,5 +418,202 @@ exports.HireEmployee = async (req, res) => {
   } catch (error) {
     console.log(error)
     return res.status (500).json ({message: 'Sth Went Wrong'});
+  }
+};
+
+exports.NewAgreement = async (req, res) => {
+  const {title, articles,position} = req.body;
+
+  try {
+    const IDNO = await GenerateIdNo ('AGHR-00001');
+      const agreement=await prisma.agreement.create ({
+        data: {
+          IDNO: IDNO,
+          title,
+          position: {
+            connect: {id: position},
+          },
+        },
+      })
+
+      articles.forEach (async(article) => {
+        await prisma.articles.create ({
+          data: {
+            name: article.articleTitle,
+            description:article.description,
+            agreement: {
+              connect: {id: agreement.id},
+            },
+          },
+        });
+      })
+
+    return res.status (200).json ({message: 'Agreement Created'});
+  } catch (error) {
+    console.log (error);
+    return res.status (500).json ({message: 'Sth Went Wrong'});
+  }
+};
+
+exports.AllAgreement = async (req, res) => {
+  try {
+    const agreements = await prisma.agreement.findMany ({include:{position:{include:{department:{include:{branch:true}}}}}});
+    return res.status (200).json ({agreements});
+  } catch (error) {
+    console.log(error)
+    return res.status (500).json ({message: 'Something went wrong'});
+  }
+};
+
+exports.UpdateAgreement = async (req, res) => {
+  const {title, articles,id,position} = req.body;
+
+  try {
+      const agreement=await prisma.agreement.update ({
+        where: {id: id},
+        data: {
+          title,
+          position: {
+            connect: {id: position},
+          },
+        },
+      })
+
+      await prisma.articles.deleteMany({where:{agreementId:agreement.id}})
+
+      articles.forEach (async(question) => {
+        await prisma.articles.create ({
+          data: {
+            name: question.name,
+            description:question.description,
+            agreement: {
+              connect: {id: agreement.id},
+            },
+          },
+        });
+      })
+
+    return res.status (200).json ({message: 'Agreement Updated'});
+  } catch (error) {
+    console.log (error);
+    return res.status (500).json ({message: 'Sth Went Wrong'});
+  }
+};
+
+
+exports.AgreementDetail = async (req, res) => {
+  const {id} = req.query;
+  try {
+    const agreement = await prisma.agreement.findUnique ({where: {id: id},include:{position:{include:{department:{include:{branch:true}}}}}});
+    const articles = await prisma.articles.findMany({where: {agreementId: agreement.id}});
+
+    const list={
+      IDNO:agreement.IDNO,
+      IDNO:agreement.createdAt,
+      IDNO:agreement.id,
+      branch:agreement.position.department.branch.id,
+      department:agreement.position.department.id,
+      position:agreement.position.id,
+      title:agreement.title,
+      status:agreement.status,
+    }
+    return res.status (200).json ({agreement:list,articles});
+  } catch (error) {
+    console.log(error)
+    return res.status (500).json ({message: 'Something went wrong'});
+  }
+};
+
+exports.NewDiscipline = async (req, res) => {
+  const {incidentDate, description,attachment,employeeWork,witnesses} = req.body;
+  try {
+    const IDNO = await GenerateDisciplineIdNo ('DIHR-00001');
+      const discipline=await prisma.employeeDiscipline.create ({
+        data: {
+          IDNO: IDNO,
+          incidentDate,
+          description,
+          attachment,
+          employeeWork: {
+            connect: {id: employeeWork},
+          },
+        },
+      })
+
+      witnesses.forEach (async(d) => {
+        await prisma.witnesses.create ({
+          data: {
+            employeeDiscipline: {
+              connect: {id: discipline.id},
+            },
+            employeeWork: {
+              connect: {id: d},
+            },
+          },
+        });
+      })
+
+    return res.status (200).json ({message: 'Discipline Report Created'});
+  } catch (error) {
+    console.log (error);
+    return res.status (500).json ({message: 'Sth Went Wrong'});
+  }
+};
+
+exports.AllDiscipline = async (req, res) => {
+  try {
+    const rawList = await prisma.employeeDiscipline.findMany ({include:{employeeWork:{include:{employee:true,position:{include:{department:{include:{branch:true}}}}}}}});
+    const list = rawList.map (emp => {
+      return {
+        id: emp.id,
+        DIDNO: emp.IDNO,
+        attachemnt: emp.attachment,
+        status: emp.status,
+        createdAt: emp.createdAt,
+        
+        IDNO: emp.employeeWork.employee.IDNO,
+        fName: emp.employeeWork.employee.fName,
+        mName: emp.employeeWork.employee.mName,
+        lName: emp.employeeWork.employee.lName,
+        sex: emp.employeeWork.employee.sex,
+        position: emp.employeeWork.position.name,
+        department: emp.employeeWork.position.department.name,
+        branch: emp.employeeWork.position.department.branch.name,
+      };
+    });
+    return res.status (200).json ({list});
+  } catch (error) {
+    console.log(error)
+    return res.status (500).json ({message: 'Something went wrong'});
+  }
+};
+
+exports.DisciplineDetail = async (req, res) => {
+  const {id}=req.query
+  try {
+    const emp = await prisma.employeeDiscipline.findUnique ({where:{id:id},include:{employeeWork:{include:{employee:true,position:{include:{department:{include:{branch:true}}}}}}}});
+    const list = {
+        id: emp.id,
+        DIDNO: emp.IDNO,
+        attachemnt: emp.attachment,
+        status: emp.status,
+        createdAt: emp.createdAt,
+        incidentDate: emp.incidentDate,
+        description: emp.description,
+        
+        IDNO: emp.employeeWork.employee.IDNO,
+        fName: emp.employeeWork.employee.fName,
+        mName: emp.employeeWork.employee.mName,
+        lName: emp.employeeWork.employee.lName,
+        sex: emp.employeeWork.employee.sex,
+        position: emp.employeeWork.position.name,
+        department: emp.employeeWork.position.department.name,
+        branch: emp.employeeWork.position.department.branch.name,
+      };
+
+    return res.status (200).json ({list});
+  } catch (error) {
+    console.log(error)
+    return res.status (500).json ({message: 'Something went wrong'});
   }
 };

@@ -39,6 +39,10 @@ exports.NewBranch = async (req, res) => {
 
   try {
     const IDNO = await GenerateIdNo ('BRHR-00001');
+    const FindBranchName=await prisma.branch.findFirst({where:{name:{contains:name}}})
+    if (FindBranchName) {
+    return res.status (401).json ({message: 'Branch Name Exist'});
+    }  
     await prisma.branch.create ({
       data: {
         IDNO: IDNO,

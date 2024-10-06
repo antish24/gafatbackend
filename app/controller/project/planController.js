@@ -77,8 +77,8 @@ const updatePlan = async (req, res) => {
       const updatedPlan = await prisma.projectPlan.update({
         where: { id: parseInt(id) },
         data: { 
-          securityNo, 
-          pricePerSecurity: parseFloat(pricePerSecurity),
+          noSecurity:parseFloat(securityNo), 
+          price: parseFloat(pricePerSecurity),
           companyId: parseInt(companyId), // Update the companyId as well
         },
       });

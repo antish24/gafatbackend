@@ -64,11 +64,28 @@ exports.FindDepartment = async (req, res) => {
   }
 };
 
+exports.CloseDepartment = async (req, res) => {
+  const {id} = req.query;
+  try {
+    const departments = await prisma.department.update ({
+      where: {id: id},data:{status:'InActive'}
+    });
+    return res.status (200).json ({message:'Closed Department'});
+  } catch (error) {
+    console.log(error)
+    return res.status (500).json ({message: 'Something went wrong'});
+  }
+};
+
 exports.NewDepartment = async (req, res) => {
   const {name, branch} = req.body;
 
   try {
     const IDNO = await GenerateIdNo ('DPHR-00001');
+    const FindDepName=await prisma.department.findFirst({where:{name:{contains:name},branchId:branch}})
+    if (FindDepName) {
+    return res.status (401).json ({message: 'Department Name Exist'});
+    }
     await prisma.department.create ({
       data: {
         IDNO: IDNO,
