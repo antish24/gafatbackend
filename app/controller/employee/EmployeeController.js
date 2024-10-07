@@ -90,32 +90,87 @@ exports.AllEmployee = async (req, res) => {
 exports.EmployeePersonalInfo = async (req, res) => {
   const {id}=req.query;
   try {
-    const emp = await prisma.employeeProfile.findFirst ({
+    const employee = await prisma.employeeProfile.findFirst ({
       where:{employee:{IDNO:id}},
       include: {
         employee: true,
       },
+    }); 
+
+    const contact = await prisma.employeeContact.findFirst ({
+      where:{employee:{IDNO:id}},
+    });
+    
+    const address = await prisma.employeeAddress.findFirst ({
+      where:{employee:{IDNO:id}},
     });
 
-    const employee ={ 
-        IDNO: emp.employee.IDNO,
-        fName: emp.employee.fName,
-        mName: emp.employee.mName,
-        lName: emp.employee.lName,
-        sex: emp.employee.sex,
-        dateOfBirth: emp.employee.dateOfBirth,
-        nationality: emp.employee.nationality,
-        IDBack: emp.IDBack,
-        IDFront: emp.IDFront,
-        profile: emp.profile,
+    const workdetail = await prisma.employeeWorkDetail.findFirst ({
+      where:{employee:{IDNO:id}},include:{position:{include:{department:{include:{branch:true}}}}}
+    });
+
+    const relatedInfo = await prisma.employeeRelatedInfo.findFirst ({
+      where:{employee:{IDNO:id}}
+    });
+
+    const infos ={ 
+        IDNO: employee.employee.IDNO,
+        IDB: employee.IDBack,
+        IDF: employee.IDFront,
+        profile: employee.profile,
+
+        fName: employee.employee.fName,
+        mName: employee.employee.mName,
+        lName: employee.employee.lName,
+
+        sex: employee.employee.sex,
+        dateOfBirth: employee.employee.dateOfBirth,
+        nationality: employee.employee.nationality,
+
+        email: contact.email,
+        phone: contact.phone,
+        otherPhone: contact.otherPhone,
+
+        city: address.city,
+        subCity: address.subCity,
+        wereda: address.wereda,
+        kebele: address.kebele,
+        houseNo: address.houseNo,
+
+        //work detail
+        branch: workdetail.position.department.branch.name,
+        department: workdetail.position.department.name,
+        position: workdetail.position.name,
+        employementType: workdetail.employementType,
+        shift: workdetail.shift,
+        startDate: workdetail.startDate,
+        salary: workdetail.salary,
+        agreement: workdetail.agreement,
+        bankAccount: workdetail.bankAccount,
+        bankName: workdetail.bankName,
+        TIN: workdetail.TIN,
+
+        //relatedinfo
+        bloodGroup: relatedInfo.bloodGroup,
+        maritalStatus: relatedInfo.maritalStatus,
+        religion: relatedInfo.religion,
+        ethnicGroup: relatedInfo.ethnicGroup,
+        medicalReport: relatedInfo.medicalReport,
+        fingerPrintReport: relatedInfo.fingerPrintReport,
+        familyBg: relatedInfo.familyBg,
+        emergencyContactName: relatedInfo.emergencyContactName,
+        emergencyContactPhone: relatedInfo.emergencyContactPhone,
+        emergencyContactRelation: relatedInfo.emergencyContactRelation,
+
       };
 
-      return res.status (200).json ({employee});
+      return res.status (200).json ({employee:infos});
   } catch (error) {
     console.log(error)
     return res.status (500).json ({message: 'Something went wrong'});
   }
 };
+
 
 exports.AllEmployeeNames = async (req, res) => {
   try {
@@ -243,7 +298,6 @@ exports.NewEmployee = async (req, res) => {
       }
     }
 
-
     const IDNO = await GenerateIdNo ('EMPHR-00001');
 
     const employeeID = await prisma.employee.create ({
@@ -268,9 +322,9 @@ exports.NewEmployee = async (req, res) => {
     await prisma.employeeProfile.create ({
       data: {
         employee: {connect: {id: employeeID.id}},
-        profile: profilePhoto.name,
-        IDFront: IDF.name,
-        IDBack: IDB.name,
+        profile: profilePhoto,
+        IDFront: IDF,
+        IDBack: IDB,
       },
     });
 
@@ -309,7 +363,7 @@ exports.NewEmployee = async (req, res) => {
         shift,
         salary,
         startDate,
-        agreement: agreement.name,
+        agreement: agreement,
         bankName,
         bankAccount,
         TIN,
@@ -323,7 +377,7 @@ exports.NewEmployee = async (req, res) => {
         maritalStatus,
         ethnicGroup,
         bloodGroup,
-        medicalReport: medicalReport.name,
+        medicalReport: medicalReport,
         fingerPrintReport: fingerPrintReport,
       },
     });
@@ -371,12 +425,19 @@ exports.HireEmployee = async (req, res) => {
       data:{status:'Active'}
     });
 
+    await prisma.employeeFingerPrint.create ({
+      data: {
+        employee: {connect: {id: employeeID.id}},
+        features:fingerPrintReport,
+      },
+    });
+
     await prisma.employeeProfile.create ({
       data: {
         employee: {connect: {id: employeeID.id}},
-        profile: profilePhoto.name,
-        IDFront: IDF.name,
-        IDBack: IDB.name,
+        profile: profilePhoto,
+        IDFront: IDF,
+        IDBack: IDB,
       },
     });
 
@@ -395,7 +456,7 @@ exports.HireEmployee = async (req, res) => {
         shift,
         salary,
         startDate,
-        agreement: agreement.name,
+        agreement: agreement,
         bankName,
         bankAccount,
         TIN,
@@ -409,8 +470,8 @@ exports.HireEmployee = async (req, res) => {
         maritalStatus,
         ethnicGroup,
         bloodGroup,
-        medicalReport: medicalReport.name,
-        fingerPrintReport: fingerPrintReport.name,
+        medicalReport: medicalReport,
+        fingerPrintReport: fingerPrintReport,
       },
     });
     console.log('ggod')
