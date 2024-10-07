@@ -3,61 +3,90 @@ const {PrismaClient} = require ('@prisma/client');
 const prisma = new PrismaClient ();
 
 exports.TimeSheetForm = async (req, res) => {
-  const {day, month, site, type} = req.query;
+  const { day, month, site, type } = req.query;
   try {
-    const currentDay = new Date ().getDate ();
-    const currentMonth = new Date ().getMonth ()+1;
-    const currentYear = new Date ().getFullYear ();
+    const currentDay = new Date().getDate();
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
 
-    if((day > currentDay) || (month > currentMonth)){
-      return res.status(404).json({message: 'Date Must Be Equal Or Less that Today'})
+    // Validation: Ensure the day and month are not in the future
+    if ((day > currentDay) || (month > currentMonth)) {
+      return res.status(404).json({ message: 'Date Must Be Equal Or Less than Today' });
     }
 
-    const findSiteTimeSheet = await prisma.employeeProject.findMany ({
+    // Fetch the projects associated with the site
+    const findSiteTimeSheet = await prisma.employeeProject.findMany({
+      where: { project: { site: site } },
+    });
+
+    // Return if no projects were found for the given site
+    if (findSiteTimeSheet.length < 1) {
+      return res.status(404).json({ message: 'No Time Sheet found for this site.' });
+    }
+
+    // Fetch existing time sheets for the specified day, month, year, and site
+    const findTimeSheet = await prisma.timeSheet.findMany({
       where: {
-        project:{site:site}
+        day: parseInt(day),
+        month: parseInt(month), // Correctly using query month
+        year: parseInt(currentYear),
+        employeeProject: { project: { site: site } },
       },
     });
 
-    if(findSiteTimeSheet.length <1){
-      return res.status(404).json({message: 'No Time Sheet found for this site.'})
-    }
-    
-    
-    const findTimeSheet = await prisma.timeSheet.findMany ({
-      where: {
-        day: parseInt (day),
-        month: parseInt (currentMonth),
-        year: parseInt (currentYear),
-        employeeProject:{project:{site:site}}
-      },
-    });
-
+    // If no time sheets are found, create them for each project under the site
     if (findTimeSheet.length < 1) {
-      findSiteTimeSheet.forEach(async(data)=>{
-      await prisma.timeSheet.create ({
-        data: {
-          employeeProject: {connect: {id: data.id}},
-          regularPH: 0,
-          regularPOTH: 0,
-          specialPH: 0,
-          OT32: 0,
-          totalHours: 0,
-          day: parseInt(day),
-          month: currentMonth,
-          year: currentYear,
-        },
-      });
-    })
+      await Promise.all(findSiteTimeSheet.map(async (data) => {
+        // Check if a time sheet already exists for the employeeProject on the specified day
+        const existingTimeSheet = await prisma.timeSheet.findFirst({
+          where: {
+            day: parseInt(day),
+            month: parseInt(month),
+            year: parseInt(currentYear),
+            employeeProjectId: data.id, // Check by employeeProject id
+          },
+        });
+
+        // Only create a time sheet if one doesn't already exist
+        if (!existingTimeSheet) {
+          await prisma.timeSheet.create({
+            data: {
+              employeeProject: { connect: { id: data.id } },
+              regularPH: 0,
+              regularPOTH: 0,
+              specialPH: 0,
+              OT32: 0,
+              totalHours: 0,
+              day: parseInt(day),
+              month: parseInt(month), // Use query month
+              year: currentYear,
+            },
+          });
+        }
+      }));
     }
-    const list = await prisma.timeSheet.findMany ({
-      where: {day: parseInt (day),month:parseInt(month),year:parseInt(currentYear)},
+
+    // Fetch all the time sheets again after creation
+    const list = await prisma.timeSheet.findMany({
+      where: { 
+        day: parseInt(day), 
+        month: parseInt(month), 
+        year: parseInt(currentYear),
+        employeeProject: { project: { site: site } } 
+      },
       include: {
-        employeeProject: {include: {workDetail: {include: {employee: true}}}},
+        employeeProject: { 
+          include: { 
+            workDetail: { 
+              include: { employee: true } 
+            } 
+          } 
+        },
       },
     });
 
-    const all = list.map (emp => {
+    // Map the result to return the desired structure
+    const all = list.map(emp => {
       return {
         id: emp.id,
         IDNO: emp.employeeProject.workDetail.employee.IDNO,
@@ -75,11 +104,16 @@ exports.TimeSheetForm = async (req, res) => {
         status: emp.status,
       };
     });
-    return res.status (200).json ({all});
+
+    // Return the resulting time sheets
+    return res.status(200).json({ all });
+    
   } catch (error) {
-    return res.status (500).json ({message: 'Something went wrong'});
+    console.error('Error:', error); // Log the error for debugging
+    return res.status(500).json({ message: 'Something went wrong' });
   }
 };
+
 
 exports.TimeSheetFormDetail = async (req, res) => {
   const {id} = req.query;
