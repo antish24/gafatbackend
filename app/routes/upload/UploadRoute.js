@@ -17,7 +17,7 @@ if (!fs.existsSync(FINGER_UPLOAD_FOLDER)) {
 const uploadStorageNew = multer.diskStorage({
   destination: './uploads/new', 
   filename: function(req, file, cb) {
-    cb(null, file.originalname);
+    cb(null, Date.now() + path.extname(file.originalname));
   }
 });
 

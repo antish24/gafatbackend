@@ -20,7 +20,7 @@ const getAllTenders = async (req, res) => {
 // Create a new tender
 // Create a new tender
 const createTender = async (req, res) => {
-  const { title, description, deadline, budget, status, attachments, companyName, startingDate } = req.body;
+  const { title, description, deadline, budget, attachments, companyName, startingDate } = req.body;
 
   if (!title || !description || !deadline || !budget || !companyName || !startingDate) {
     return res.status(400).json({ message: 'Title, description, deadline, budget, company name, and starting date are required' });
@@ -33,8 +33,8 @@ const createTender = async (req, res) => {
         description,
         deadline: new Date(deadline),
         budget: parseFloat(budget),
-        status: status || 'Pending',
-        attachments: attachments ? attachments.join(',') : '',
+        status:'Pending',
+        attachments: attachments,
         companyName, // Add company name
         startingDate: new Date(startingDate), // Add starting date
       },
