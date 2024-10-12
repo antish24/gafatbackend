@@ -153,7 +153,7 @@ model Position {
 
 model BusinessInfo {
   id      String @id @default(uuid())
-  name    String 
+  name    String
   phone   String
   email   String
   VAT     String
@@ -253,9 +253,45 @@ model EmployeeWorkDetail {
   Project                 EmployeeProject[]
   employeePayroll         EmployeePayroll[]
   employeeDiscipline      EmployeeDiscipline[]
+  systemUser              SystemUser?
   employeeSalaryStructure EmployeeSalaryStructure?
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
+}
+
+model SystemUser {
+  id         String             @id @default(uuid())
+  IDNO       String             @unique
+  userName   String
+  email      String             @unique
+  password   String
+  token      String?
+  status     UserStatus         @default(Active)
+  access     UserAccess         @default(Read)
+  tasks      SystemUserTasks?
+  employee   EmployeeWorkDetail @relation(fields: [employeeId], references: [id])
+  employeeId String             @unique
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+}
+
+model SystemUserTasks {
+  id        String      @id @default(uuid())
+  task      SystemTasks @relation(fields: [taskId], references: [id])
+  taskId    String      @unique
+  user      SystemUser  @relation(fields: [userId], references: [id])
+  userId    String      @unique
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model SystemTasks {
+  id        String            @id @default(uuid())
+  name      String
+  code      String            @unique
+  userTasks SystemUserTasks[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
 }
 
 model EmployeeDiscipline {
@@ -649,6 +685,17 @@ enum PayrollStatus {
 enum PensionType {
   Yes
   No
+}
+
+enum UserAccess {
+  Full
+  Read
+  Write
+}
+
+enum UserStatus {
+  Active
+  InActive
 }
 
 enum TaxType {

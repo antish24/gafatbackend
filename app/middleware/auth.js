@@ -1,40 +1,21 @@
-const jwt = require('jsonwebtoken');
-const config = require('../config/index');
-const secretKey = config.JWT_SECRET;
-const {PrismaClient} = require ('@prisma/client');
-const prisma = new PrismaClient ();
+const jwt = require ('jsonwebtoken');
+const config = require ('../config/index');
+const JWT_SECRET = config.JWTSECRET;
 
-require('dotenv').config()
-
-const authMiddleware = async (req, res, next) => {
+exports.authenticateToken = (req, res, next) => {
     const authHeader = req.headers.authorization;
-
-    if (!authHeader) {
-      // return res.status(401).json({ error: 'UnAuthorized' });
-      return res.status(401).json({ error: 'No token provided' });
+    const token = authHeader && authHeader.split(' ')[1]; // Extract token from Authorization header
+  
+    if (token == null) {
+      return res.status(401).json({message:'Unauthorized'}); // Unauthorized
     }
   
-    const [bearer, token] = authHeader.split(' ');
-  
-    if (bearer !== 'Bearer' || !token) {
-      // return res.status(401).json({ error: 'UnAuthorized' });
-      return res.status(401).json({ error: 'Invalid token format' });
-    }
-  
-    try {
-      const decoded = jwt.verify(token, secretKey);
-      const customerId = decoded.customerId;
-  
-      const customer = await prisma.user.findUnique({where:{id:customerId}})
-  
-      if (!customer || customer.token !== token) {
-        return res.status(401).json({ error: 'UnAuthorized' });
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+      if (err) {
+        return res.status(403).json({message:'Forbidden'}); // Forbidden
       }
-      req.customer = customer;
+      
+      req.user = user; // Attach user information to the request object
       next();
-    } catch (err) {
-      return res.status(403).json({ error: 'Session expired' });
-    }
-};
-
-module.exports = authMiddleware;
+    });
+  };

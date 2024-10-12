@@ -1,7 +1,7 @@
 const express=require('express')
 const router=express.Router()
 
-// const userRoute=require('./UsersRoute')
+const userRoute=require('./users/UsersRoute')
 
 //Timesheet routes
 const TimeSheetRoute=require('./timesheet/TimeSheetRoute')
@@ -50,12 +50,14 @@ const RequestRoute=require('./asset/RequestRoute')
 
 //dashboard
 const DashboardRoute=require('./dashboard//DashboardRoute')
+const AuthRoute=require('./AuthRoute')
 
 
 router.use('/upload',UploadRoute)
+router.use('/auth',AuthRoute)
 router.use('/dashboard',DashboardRoute)
 
-// router.use('/users',userRoute)
+router.use('/users',userRoute)
 router.use('/interview',InterviewRoute)
 router.use('/vacancy',VacancyRoute)
 
