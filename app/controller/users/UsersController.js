@@ -75,7 +75,7 @@ async function GenerateIdNo (prefixname) {
 
 exports.AllUsers = async (req, res) => {
   try {
-    const users = await prisma.systemUser.findMany ();
+    const users = await prisma.systemUser.findMany ({include:{employee:{include:{employee:{include:{contact:true}}}}}});
     return res.status (200).json ({users});
   } catch (error) {
     console.log (error);
@@ -95,12 +95,14 @@ exports.UserDetail = async (req, res) => {
 };
 
 exports.UpdateDetail = async (req, res) => {
-  const {fullname, gender, access, phone, email} = req.body;
+  const {userName, email, access, tasks} = req.body;
   try {
-    await prisma.systemUser.update ({
+    await prisma.systemUser.updateMany ({
       where: {email: email},
-      data: {fullname, gender, access, phone},
+      data: {userName, access},
     });
+
+    //tasks logic below
     return res.status (200).json ({message: 'User Updated'});
   } catch (error) {
     console.log (error);
@@ -114,7 +116,7 @@ exports.DeleteUser = async (req, res) => {
     await prisma.systemUser.updateMany ({
       where: {IDNO: id},
       data: {
-        status: 'Deleted',
+        status: 'InActive',
       },
     });
     return res.status (200).json ({message: 'User Deleted'});
