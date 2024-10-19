@@ -403,6 +403,7 @@ model LeaveApplication {
   endDate     DateTime
   totalDay    Int
   reason      String
+  attachment  String?
   status      LeaveApplicationStatus @default(Pending)
   createdAt   DateTime               @default(now())
   updatedAt   DateTime               @updatedAt
@@ -418,14 +419,30 @@ model Holiday {
   updatedAt DateTime @updatedAt
 }
 
-model LeaveBalance {
+model LeaveAllocation {
   id         String   @id @default(uuid())
-  employee   Employee @relation(fields: [employeeId], references: [id])
-  employeeId String   @unique
+  startMonth DateTime
+  endMonth   DateTime
+  count      Int
   used       Int      @default(0)
-  balance    Int
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  @@unique([startMonth, endMonth])
+}
+
+model LeaveBalance {
+  id         String             @id @default(uuid())
+  employee   Employee           @relation(fields: [employeeId], references: [id])
+  employeeId String             @unique
+  used       Int                @default(0)
+  balance    Int
+  year       DateTime           @default(now())
+  status     LeaveBalanceStatus @default(Active)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  @@unique([year, employeeId])
 }
 
 model TimeSheet {
@@ -680,6 +697,11 @@ enum PayrollStatus {
   Pending
   Approved
   Failed
+}
+
+enum LeaveBalanceStatus {
+  Active
+  Expired
 }
 
 enum PensionType {

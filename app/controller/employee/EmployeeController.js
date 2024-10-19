@@ -351,7 +351,8 @@ exports.NewEmployee = async (req, res) => {
     await prisma.leaveBalance.create ({
       data: {
         employee: {connect: {id: employeeID.id}},
-        balance:16,
+        year:startDate,
+        balance:0,
       },
     });
 

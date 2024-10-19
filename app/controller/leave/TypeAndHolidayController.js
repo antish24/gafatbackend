@@ -52,7 +52,31 @@ exports.NewType = async (req, res) => {
   }
 };
 
+//allocation
+exports.NewAllocation = async (req, res) => {
+  const {count, startMonth,endMonth} = req.body;
+  console.log(startMonth)
+  try {
+    await prisma.leaveAllocation.create ({
+      data: {
+        startMonth:startMonth,endMonth:endMonth?endMonth:startMonth, count:parseInt(count),
+      },
+    });
+    return res.status (200).json ({message: 'New Allocation Created'});
+  } catch (error) {
+    console.log (error);
+    return res.status (500).json ({message: 'Sth Went Wrong'});
+  }
+};
 
+exports.AllAllocations = async (req, res) => {
+  try {
+    const all = await prisma.leaveAllocation.findMany ();
+    return res.status (200).json ({all});
+  } catch (error) {
+    return res.status (500).json ({message: 'Something went wrong'});
+  }
+};
 // holiday controller
 
 exports.AllHoliday = async (req, res) => {

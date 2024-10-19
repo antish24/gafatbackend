@@ -7,6 +7,9 @@ router.get('/alltype',Controller.AllTypes)
 router.post('/updatetype',Controller.UpdateTypeDetail)
 router.get('/typedetail',Controller.TypeDetail)
 
+router.post('/newallocation',Controller.NewAllocation)
+router.get('/allocations',Controller.AllAllocations)
+
 router.post('/newholiday',Controller.NewHoliday)
 router.get('/allholiday',Controller.AllHoliday)
 router.post('/updateholiday',Controller.UpdateHolidayDetail)
