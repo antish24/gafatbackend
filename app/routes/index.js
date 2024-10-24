@@ -7,9 +7,6 @@ const userRoute=require('./users/UsersRoute')
 const TimeSheetRoute=require('./timesheet/TimeSheetRoute')
 const UploadRoute=require('./upload/UploadRoute')
 
-//Timesheet routes
-const ProjectRoute=require('./project/projectRoute')
-
 //vacancy routes
 const VacancyRoute=require('./vacancy/VacancyRoute')
 const InterviewRoute=require('./vacancy/InterviewRoute')
@@ -78,8 +75,6 @@ router.use('/leave/report',LeaveReportRoute)
 router.use('/employee',EmployeeRoute)
 
 router.use('/timesheet',TimeSheetRoute)
-
-router.use('/project',ProjectRoute)
 
 router.use('/salary',SalaryRoute)
 router.use('/payroll',PayrollRoute)
