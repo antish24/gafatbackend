@@ -27,6 +27,7 @@ const EmployeeRoute=require('./employee/EmployeeRoute')
 const LeaveApplicationRoute=require('./leave/LeaveApplicationRoute')
 const LeaveRoute=require('./leave/LeaveTypeAndHolidayRoute')
 const LeaveBalanceRoute=require('./leave/LeaveBalanceRoute')
+const LeaveReportRoute=require('./leave/LeaveReportRoute')
 
 //salary route
 const SalaryRoute=require('./salary/SalaryRoute')
@@ -72,6 +73,7 @@ router.use('/doc',DocRoute)
 router.use('/leave',LeaveRoute)
 router.use('/leave/application',LeaveApplicationRoute)
 router.use('/leave/balance',LeaveBalanceRoute)
+router.use('/leave/report',LeaveReportRoute)
 
 router.use('/employee',EmployeeRoute)
 

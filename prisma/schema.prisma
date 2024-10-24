@@ -242,6 +242,8 @@ model EmployeeWorkDetail {
   salary                  String
   startDate               DateTime
   agreement               String
+  otherAgreement          String?
+  reasonForOtherAgreement String?
   bankName                String?
   bankAccount             String?
   TIN                     String?
